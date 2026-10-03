@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decision-router-lab"
+version = "0.1.0"
+description = "Local Laya ticket routing with abstention and reproducible evaluation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = ["httpx>=0.27,<1"]
+
+[project.optional-dependencies]
+laya = ["laya==0.3.4", "transformers>=4.45,<5"]
+ui = ["streamlit>=1.40,<2"]
+dev = ["pytest>=8,<9", "ruff>=0.9,<1"]
+
+[project.scripts]
+decision-router = "decision_router.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
