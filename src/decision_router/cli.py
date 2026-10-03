@@ -9,10 +9,10 @@ from .providers import HostedLLM, make_provider
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Local decision routing and reproducible evaluation"
+        description="Hosted and local decision routing with reproducible evaluation"
     )
     parser.add_argument("command", choices=["route", "benchmark"])
-    parser.add_argument("--provider", choices=["laya", "simulation", "llm"], default="laya")
+    parser.add_argument("--provider", choices=["jev", "laya", "simulation", "llm"], default="laya")
     parser.add_argument(
         "--checkpoint",
         choices=["english", "typed-decisions", "multilingual"],

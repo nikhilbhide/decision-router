@@ -3,7 +3,13 @@ import json
 import httpx
 import pytest
 
-from decision_router.providers import HF_BASE_URL, HF_DEFAULT_MODEL, HostedLLM
+from decision_router.providers import (
+    HF_BASE_URL,
+    HF_DEFAULT_MODEL,
+    VERCEL_BASE_URL,
+    VERCEL_DEFAULT_MODEL,
+    HostedLLM,
+)
 
 
 def configure(monkeypatch):
@@ -62,3 +68,34 @@ def test_explicit_empty_session_key_does_not_use_other_provider_credentials(monk
     monkeypatch.setenv("LLM_API_KEY", "test-other-provider")
     with pytest.raises(ValueError, match="Configure"):
         HostedLLM(api_key="", model=HF_DEFAULT_MODEL, base_url=HF_BASE_URL)
+
+
+def test_vercel_llm_uses_gateway_key_and_model_without_hf_credentials(monkeypatch):
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.setenv("AI_GATEWAY_API_KEY", "test-gateway-key")
+    monkeypatch.setenv("HF_TOKEN", "test-hf-key")
+    monkeypatch.setenv("LLM_API_KEY", "test-custom-key")
+
+    def fake_post(url, **kwargs):
+        assert url == VERCEL_BASE_URL + "/chat/completions"
+        assert kwargs["headers"]["Authorization"] == "Bearer test-gateway-key"
+        assert kwargs["json"]["model"] == VERCEL_DEFAULT_MODEL
+        assert kwargs["json"]["response_format"]["type"] == "json_schema"
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": '{"department":"billing"}'}}]},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    prediction = HostedLLM(base_url=VERCEL_BASE_URL).predict("charged twice")
+    assert prediction.model == VERCEL_DEFAULT_MODEL
+    assert "test-gateway-key" not in str(prediction)
+
+
+def test_vercel_does_not_fall_back_to_other_services_keys(monkeypatch):
+    monkeypatch.delenv("AI_GATEWAY_API_KEY", raising=False)
+    monkeypatch.setenv("HF_TOKEN", "test-hf-key")
+    monkeypatch.setenv("LLM_API_KEY", "test-custom-key")
+    with pytest.raises(ValueError, match="Configure"):
+        HostedLLM(base_url=VERCEL_BASE_URL)

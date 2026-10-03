@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "decision-router-lab"
 version = "0.1.0"
-description = "Local Laya ticket routing with abstention and reproducible evaluation"
+description = "Hosted Jev or local Laya ticket routing with abstention and reproducible evaluation"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

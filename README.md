@@ -2,13 +2,14 @@
 
 **When should a decision model act, and when should it ask for help?**
 
-A local support-ticket routing experiment using [Laya](https://github.com/NandhaKishorM/laya).
+A support-ticket routing experiment using hosted [Jev through Vercel](https://vercel.com/ai-gateway/models/jev)
+or local [Laya](https://github.com/NandhaKishorM/laya).
 It selects a department, applies an explicit probability threshold, optionally asks
 an LLM for a second opinion, and queues unresolved cases for human review.
 
 The application and synthetic dataset are MIT licensed. Laya is an independent,
-Apache-2.0 open-weight model; it is not TypeSafe's Jev. Model weights stay in the
-Hugging Face cache and are not committed to this repository.
+Apache-2.0 open-weight model; it is not TypeSafe's Jev. Jev runs remotely through
+Vercel AI Gateway. Local Laya weights stay in the Hugging Face cache and are not committed.
 
 ## Architecture
 
@@ -20,8 +21,8 @@ sequenceDiagram
     actor Owner as User
     participant UI as Interactive UI
     participant Control as Python control loop
-    participant SystemOne as Local Laya
-    participant LLM as Hugging Face hosted LLM
+    participant SystemOne as Jev via Vercel or local Laya
+    participant LLM as Vercel or Hugging Face hosted LLM
     participant Review as Human review queue
     Owner->>UI: Submit a support ticket
     UI->>Control: Ticket and routing thresholds
@@ -55,18 +56,22 @@ calendar execution and a general task-planning agent are not implemented.
 ```mermaid
 flowchart TD
     User["User enters a support ticket"] --> UI["Interactive Streamlit demo"]
-    UI --> Laya["Local Laya: pinned open-weight checkpoint"]
+    UI --> Engine{"Selected decision engine"}
+    Engine --> Jev["Hosted Jev via Vercel AI Gateway"]
+    Engine --> Laya["Local Laya: pinned open-weight checkpoint"]
     Cache["Hugging Face weights cache"] -.->|"First download; local thereafter"| Laya
     Laya --> Validate["Validate choice and probability distribution"]
+    Jev --> Validate
     Validate --> Gate{"In scope and top probability above threshold?"}
     Gate -->|"Yes"| Auto["Automatically select department"]
     Gate -->|"No"| Fallback{"LLM fallback enabled?"}
-    Fallback -->|"Yes"| LLM["Hugging Face hosted LLM: structured second opinion"]
+    Fallback -->|"Yes"| LLM["Vercel or Hugging Face LLM: structured second opinion"]
     Fallback -->|"No"| Human["Human review queue"]
     LLM --> Agree{"Same department and above agreement threshold?"}
     Agree -->|"Yes; in scope"| Assisted["Route after agreement"]
     Agree -->|"No"| Human
     Laya -.->|"Overflow or failure"| Human
+    Jev -.->|"Request failure"| Human
     Validate -.->|"Invalid output"| Human
     LLM -.->|"Failure or invalid output"| Human
     Auto --> Trace["Decision trace and JSON export"]
@@ -75,13 +80,14 @@ flowchart TD
     Trace --> UI
     Dataset["Grouped dev and test tickets"] --> Eval["One-provider evaluation"]
     Laya --> Eval
+    Jev --> Eval
     LLM --> Eval
     Eval --> Metrics["Accuracy; warm latency; coverage; routing errors"]
     Metrics --> UI
 ```
 
 The model produces a distribution; Python code owns the routing policy. The optional
-simulation substitutes labeled keyword rules for Laya. The review queue is a local
+simulation substitutes labeled keyword rules for the decision model. The review queue is a local
 demo. Individual-provider benchmarks do not measure the combined cascade.
 See [the detailed diagrams](docs/architecture.md) for the evaluation workflow.
 
@@ -97,8 +103,9 @@ python3.11 -m venv .venv
 .venv/bin/streamlit run app.py --server.address 127.0.0.1
 ```
 
-Open `http://localhost:8501`. Select **simulation** to try the interface immediately,
-or **laya** to run the actual model. Simulation is deterministic keyword matching
+Open `http://localhost:8501`. The UI starts with **Jev · hosted via Vercel** and needs
+an AI Gateway key. Select **Mock rules · no AI model** to try the interface immediately,
+or **Laya · live local model** to run the local model. Simulation is deterministic keyword matching
 with invented probability scores, labeled throughout the application and exports.
 It must not be used as model evidence.
 
@@ -126,7 +133,7 @@ fine-tuned on this project's dataset. Base checkpoints and this checkpoint can
 perform very differently. `--checkpoint english` and `--checkpoint multilingual`
 allow controlled comparisons.
 
-Policy uses the selected label's probability, **not the SDK's confidence statistic**:
+Policy uses the selected label's probability, **not the model's separate confidence statistic**:
 
 1. A non-`other` decision at or above `--threshold` routes automatically (default 0.85).
 2. Otherwise, with `--llm-fallback`, ask the configured LLM. If it agrees on a
@@ -140,9 +147,75 @@ before automating with it. `other` always requires review. The UI review queue i
 session-local; it does not send messages, create real support tickets or persist a database.
 Oversized inputs are rejected rather than silently truncated by the Laya SDK.
 
-## Hosted Hugging Face LLM baseline and fallback
+## Hosted Jev through Vercel
 
-No LLM download is required. The default hosted model is
+No decision-model download is required. For a hosted-only installation:
+
+```bash
+.venv/bin/python -m pip install -e '.[ui,dev]'
+```
+
+1. In the Vercel dashboard, choose **Create** beside **AI Gateway Key** and create a key.
+2. Open this application's sidebar and select **Jev · hosted via Vercel**.
+3. Enter the key in the masked **Vercel AI Gateway key** field under **Jev connection**.
+4. Leave **LLM service** set to **Vercel AI Gateway** to reuse the key for Qwen 3 32B.
+5. Submit a sample using **Route ticket**, or check **Include the configured LLM** and run **Live comparison**.
+
+The session key is not written to files, exports, logs or Git, and is not held in a
+shared resource cache. You may instead set `AI_GATEWAY_API_KEY` in the server environment.
+The application sends ticket text to Vercel only when you run Jev. You need available
+Gateway credits or billing. No project deployment or direct TypeSafe key is required.
+
+The adapter calls `POST https://ai-gateway.vercel.sh/v1/evaluate` with model
+`typesafe-ai/jev`, state and a typed department question. It validates the choice and
+the full five-option probability distribution before applying the routing policy.
+Hosted latency includes network time. **Run evaluation** makes 21 requests for a
+bundled split, including warmup; both Jev and any LLM fallback consume their respective
+provider credits. The comparison makes one Jev request and optionally one LLM request.
+
+```bash
+# Set AI_GATEWAY_API_KEY securely in your environment first.
+.venv/bin/decision-router route --provider jev \
+  --text 'We were charged twice. Please refund the duplicate payment.'
+.venv/bin/decision-router benchmark --provider jev --split dev \
+  --output results/jev-dev.json
+```
+
+Contract and UI tests use mocked responses and do not establish live account access
+or Jev's accuracy. An authenticated smoke run still requires your Gateway key.
+References: [Vercel evaluation API](https://vercel.com/docs/ai-gateway/modalities/evaluation),
+[Gateway API keys](https://vercel.com/docs/ai-gateway/authentication-and-byok/api-keys).
+
+## Hosted Vercel LLM baseline and fallback
+
+The UI defaults to `alibaba/qwen-3-32b` through Vercel AI Gateway, using the same
+masked Gateway key as Jev. No Hugging Face token, local LLM download or Vercel app
+deployment is required. The LLM uses `/v1/chat/completions`; Jev uses the separate
+`/v1/evaluate` API. Both consume Gateway credits when you run them.
+
+Open **Hosted LLM connection**, leave **LLM service** on **Vercel AI Gateway**, and
+check **Include the configured LLM** in **Live comparison**. Alternatively, enable
+**Ask an LLM when uncertain** for routing. A custom Vercel model ID is supported;
+choose a model/provider with JSON-schema structured-output support.
+
+For CLI calls, configure the service explicitly (the CLI's default remains HF):
+
+```bash
+# Set AI_GATEWAY_API_KEY securely in your environment first.
+export LLM_BASE_URL='https://ai-gateway.vercel.sh/v1'
+export LLM_MODEL='alibaba/qwen-3-32b'
+.venv/bin/decision-router route --provider jev --llm-fallback \
+  --text 'I cannot access my account and need help with an invoice.'
+```
+
+Tests verify the API contract and that one session key serves both models. Live
+authenticated requests and routing quality still need verification with your account.
+References: [Qwen 3 32B on Vercel](https://vercel.com/ai-gateway/models/qwen-3-32b),
+[Vercel's Python API guide](https://vercel.com/docs/ai-gateway/sdks-and-apis/python).
+
+## Alternative: hosted Hugging Face LLM baseline and fallback
+
+No LLM download is required. The default for the Hugging Face connection is
 `Qwen/Qwen3.5-35B-A3B:deepinfra` via `https://router.huggingface.co/v1`.
 The provider is explicit because structured-output support varies by provider.
 The Hugging Face live model catalog listed this combination with structured-output
@@ -150,7 +223,7 @@ support when checked on October 3, 2026. `Qwen/Qwen3-32B:deepinfra` is an altern
 Availability can change; neither model's ticket-routing quality has been measured
 by this project yet.
 
-In the UI, open **Hosted LLM connection**, choose the model, and enter a Hugging Face
+In the UI, open **Hosted LLM connection**, select **Hugging Face**, choose the model, and enter a Hugging Face
 token with **Make calls to Inference Providers** permission. The token stays in the
 session and is not written to files, reports or Git. You need available inference
 credits. Then use **Live comparison**, enable LLM fallback, or evaluate the LLM.
@@ -183,7 +256,7 @@ export LLM_MODEL='Qwen/Qwen3.5-35B-A3B:deepinfra'
 
 The LLM returns only a label. We do not invent probability distributions or treat
 self-reported confidence as calibrated evidence. Compare its classification accuracy
-and latency with Laya; standalone LLM probability and selective-routing metrics are
+and latency with the selected decision model; standalone LLM probability and selective-routing metrics are
 unavailable. Hosted cost depends on your chosen model; token usage is exported for
 successful calls, and account billing remains the source of truth.
 
@@ -216,7 +289,7 @@ The threshold sweep is an exploration of frozen predictions. It does not refit
 probabilities, train Laya or select an operating threshold for you. The optional
 LLM agreement cascade is available in routing, but **the benchmark measures one
 provider at a time**; do not report its results as measured cascade performance.
-The UI also includes a live comparison of Laya and your configured LLM on the same
+The UI also includes a live comparison of your selected decision engine and configured LLM on the same
 ticket, a movable threshold preview that reuses the actual probabilities, and a
 session-local queue with manual review actions.
 
@@ -252,7 +325,7 @@ probabilities. Local execution and typed outputs do not establish decision quali
 ```
 
 CI tests routing and failure handling, probability validation, benchmark metrics,
-dataset split isolation and the structured LLM contract without downloading weights
+dataset split isolation, the hosted Jev contract and the structured LLM contract without downloading weights
 or using paid APIs. A manual Laya smoke run checks the actual runtime separately.
 
 ## GitHub and the follow-up post

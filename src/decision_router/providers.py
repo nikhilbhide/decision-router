@@ -14,6 +14,10 @@ from .core import LABELS, QUESTIONS, Prediction
 DEFAULT_REVISION = "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851"
 HF_BASE_URL = "https://router.huggingface.co/v1"
 HF_DEFAULT_MODEL = "Qwen/Qwen3.5-35B-A3B:deepinfra"
+JEV_MODEL = "typesafe-ai/jev"
+VERCEL_EVALUATE_URL = "https://ai-gateway.vercel.sh/v1/evaluate"
+VERCEL_BASE_URL = "https://ai-gateway.vercel.sh/v1"
+VERCEL_DEFAULT_MODEL = "alibaba/qwen-3-32b"
 
 
 def normalize_sdk_probabilities(probabilities):
@@ -122,27 +126,63 @@ class Laya:
         )
 
 
+class Jev:
+    """Hosted typed decisions through Vercel's evaluation API."""
+
+    def __init__(self, api_key=None):
+        self.key = api_key if api_key is not None else os.environ.get("AI_GATEWAY_API_KEY", "")
+        if not self.key.strip():
+            raise ValueError("Add your Vercel AI Gateway API key")
+        self.model = JEV_MODEL
+
+    def predict(self, text: str) -> Prediction:
+        start = perf_counter()
+        response = httpx.post(
+            VERCEL_EVALUATE_URL,
+            timeout=45,
+            headers={"Authorization": f"Bearer {self.key}"},
+            json={"model": self.model, "state": text, "questions": QUESTIONS},
+        )
+        response.raise_for_status()
+        data = response.json()
+        answer = data["answers"]["department"]
+        if answer.get("type") != "choice":
+            raise ValueError("Jev returned an unexpected answer type")
+        probabilities = normalize_sdk_probabilities(answer["probabilities"])
+        confidence = answer.get("confidence")
+        if confidence is not None and (not math.isfinite(confidence) or not 0 <= confidence <= 1):
+            raise ValueError("Jev returned invalid confidence")
+        usage = data.get("usage", {})
+        return Prediction(
+            label=answer["choice"],
+            provider="jev-vercel",
+            latency_ms=(perf_counter() - start) * 1000,
+            probabilities=probabilities,
+            model=data.get("model", self.model),
+            sdk_confidence=confidence,
+            input_tokens=usage.get("inputTokens"),
+            output_tokens=usage.get("outputTokens"),
+        )
+
+
 class HostedLLM:
     """OpenAI-compatible structured classification; no invented confidence scores."""
 
     def __init__(self, api_key=None, model=None, base_url=None):
         self.base = (base_url or os.environ.get("LLM_BASE_URL", HF_BASE_URL)).rstrip("/")
-        self.key = (
-            api_key
-            if api_key is not None
-            else (
-                os.environ.get("HF_TOKEN", "") or os.environ.get("LLM_API_KEY", "")
-                if self.base == HF_BASE_URL
-                else os.environ.get("LLM_API_KEY", "")
-            )
-        )
-        self.model = (
-            model
-            if model is not None
-            else os.environ.get("LLM_MODEL", HF_DEFAULT_MODEL if self.base == HF_BASE_URL else "")
-        )
-        if not self.key or not self.model:
-            raise ValueError("Configure a Hugging Face token or LLM_API_KEY and LLM_MODEL")
+        if self.base == HF_BASE_URL:
+            default_key = os.environ.get("HF_TOKEN", "") or os.environ.get("LLM_API_KEY", "")
+            default_model = HF_DEFAULT_MODEL
+        elif self.base == VERCEL_BASE_URL:
+            default_key = os.environ.get("AI_GATEWAY_API_KEY", "")
+            default_model = VERCEL_DEFAULT_MODEL
+        else:
+            default_key = os.environ.get("LLM_API_KEY", "")
+            default_model = ""
+        self.key = api_key if api_key is not None else default_key
+        self.model = model if model is not None else os.environ.get("LLM_MODEL", default_model)
+        if not self.key.strip() or not self.model.strip():
+            raise ValueError("Configure the selected service's API key and LLM model")
         if not self.base.startswith("https://") and not re.match(
             r"^http://(localhost|127\.0\.0\.1)(:|/|$)", self.base
         ):
@@ -202,6 +242,8 @@ def make_provider(name, checkpoint="typed-decisions", device="cpu", revision=Non
         return Simulation()
     if name == "laya":
         return Laya(checkpoint, device, revision)
+    if name == "jev":
+        return Jev()
     if name == "llm":
         return HostedLLM()
     raise ValueError("Unknown provider")
