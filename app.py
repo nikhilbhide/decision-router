@@ -1,15 +1,12 @@
 """Run with: streamlit run app.py --server.address 127.0.0.1"""
 
-import html
 import json
 import os
 import platform
-import re
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 
 from decision_router.core import LABELS, Policy, Prediction, apply_policy, route
 from decision_router.evaluation import policy_metrics, run_benchmark
@@ -101,8 +98,8 @@ def configured_llm():
     return HostedLLM(api_key=llm_key, model=llm_model, base_url=llm_base)
 
 
-route_tab, compare_tab, eval_tab, review_tab, architecture_tab = st.tabs(
-    ["Route a ticket", "Live comparison", "Evaluate the model", "Review queue", "Architecture"]
+route_tab, compare_tab, eval_tab, review_tab = st.tabs(
+    ["Route a ticket", "Live comparison", "Evaluate the model", "Review queue"]
 )
 
 with route_tab:
@@ -417,24 +414,3 @@ with review_tab:
             ],
             hide_index=True,
         )
-
-with architecture_tab:
-    st.subheader("The model estimates. The policy acts.")
-    readme = (Path(__file__).parent / "README.md").read_text()
-    diagrams = re.findall(r"```mermaid\n(.*?)```", readme, re.DOTALL)
-    diagram_choice = st.selectbox("Architecture view", ["Request sequence", "Components"])
-    mermaid_source = diagrams[0 if diagram_choice == "Request sequence" else 1]
-    components.html(
-        '<html><body style="background:#fff"><pre class="mermaid">'
-        + html.escape(mermaid_source)
-        + '</pre><script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";'
-        + 'mermaid.initialize({startOnLoad:true,securityLevel:"strict",theme:"default"});</script></body></html>',
-        height=1050,
-        scrolling=True,
-    )
-    st.caption(
-        "The same Mermaid source is embedded in README.md for GitHub. This preview loads the Mermaid renderer from a CDN; the source below is available offline."
-    )
-    with st.expander("Mermaid source"):
-        st.code(mermaid_source, language="mermaid")
-    st.download_button("Download architecture", mermaid_source, "architecture.mmd", "text/plain")
