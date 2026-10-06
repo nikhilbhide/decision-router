@@ -75,11 +75,26 @@ def test_invalid_jev_outputs_require_review(monkeypatch, problem):
     assert result.primary is None
 
 
-@pytest.mark.parametrize("status", [401, 402, 429, 500])
-def test_gateway_failure_requires_review_and_does_not_expose_response(monkeypatch, status):
+@pytest.mark.parametrize(
+    ("status", "expected_advice"),
+    [
+        (401, "Authentication failed"),
+        (402, "credits or billing"),
+        (403, "Access denied"),
+        (404, "model was not found"),
+        (429, "rate or usage limit"),
+        (500, "service is unavailable"),
+    ],
+)
+def test_gateway_failure_requires_review_and_does_not_expose_response(
+    monkeypatch, status, expected_advice
+):
     stub(monkeypatch, {"error": "test-key must never appear in trace"}, status)
     result = route("ticket", Jev(api_key="test-key"), Policy())
     assert result.status == "human_review"
+    assert result.primary is None
+    assert f"HTTP {status}" in result.reason
+    assert expected_advice in result.reason
     assert "test-key" not in str(result.to_dict())
 
 

@@ -45,60 +45,112 @@ def test_ui_human_can_resolve_a_review_case():
     assert app.session_state["history"][0]["human_decision"] == "technical"
 
 
-def test_jev_ui_requires_key_before_enabling_paid_calls(monkeypatch):
-    monkeypatch.delenv("AI_GATEWAY_API_KEY", raising=False)
-    app = AppTest.from_file(str(Path(__file__).parents[1] / "app.py"), default_timeout=30).run()
-    assert not app.exception
-    assert element(app.selectbox, "Decision engine").value == "jev"
-    assert element(app.button, "Route ticket").disabled
-    assert element(app.button, "Run live comparison").disabled
-    assert element(app.button, "Run evaluation").disabled
-    assert element(app.text_input, "Vercel AI Gateway key").proto.type == TextInput.PASSWORD
-
-
-def test_jev_ui_calls_selected_engine_once_without_local_model_download(monkeypatch):
+@pytest.fixture
+def model_calls(monkeypatch):
     from decision_router.core import LABELS, Prediction
-    from decision_router.providers import (
-        VERCEL_BASE_URL,
-        VERCEL_DEFAULT_MODEL,
-        HostedLLM,
-        Jev,
-        Laya,
-    )
+    from decision_router.providers import HostedLLM, Jev, Laya
 
-    calls = []
+    calls = {"laya": [], "llm": [], "probability": 0.7}
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.setattr(Laya, "__init__", lambda self, *args, **kwargs: None)
 
     def predict(self, text):
-        calls.append(self.key)
-        return Prediction(
-            "billing",
-            "jev-vercel",
-            150,
-            {label: 0.92 if label == "billing" else 0.02 for label in LABELS},
-            model=self.model,
-        )
-
-    def forbid_local(*args, **kwargs):
-        raise AssertionError("Hosted Jev must not load Laya")
-
-    llm_calls = []
+        calls["laya"].append(text)
+        p = calls["probability"]
+        probabilities = dict.fromkeys(LABELS, (1 - p) / 4)
+        probabilities["billing"] = p
+        return Prediction("billing", "laya", 100, probabilities, "typed-decisions")
 
     def llm_predict(self, text):
-        llm_calls.append((self.key, self.base, self.model))
+        calls["llm"].append((self.key, self.base, self.model))
         return Prediction("billing", "hosted-llm", 500, model=self.model)
 
-    monkeypatch.setattr(Jev, "predict", predict)
-    monkeypatch.setattr(Laya, "__init__", forbid_local)
+    def forbid_jev(*args, **kwargs):
+        raise AssertionError("The app must not initialize Jev")
+
+    monkeypatch.setattr(Laya, "predict", predict)
     monkeypatch.setattr(HostedLLM, "predict", llm_predict)
+    monkeypatch.setattr(Jev, "__init__", forbid_jev)
+    return calls
+
+
+def test_ui_defaults_to_laya_and_hf_without_requesting_a_model(model_calls):
     app = AppTest.from_file(str(Path(__file__).parents[1] / "app.py"), default_timeout=30).run()
-    element(app.text_input, "Vercel AI Gateway key").set_value("test-session-key").run()
-    element(app.checkbox, "Include the configured LLM").check().run()
-    element(app.button, "Run live comparison").click().run()
     assert not app.exception
-    assert calls == ["test-session-key"]
-    assert llm_calls == [("test-session-key", VERCEL_BASE_URL, VERCEL_DEFAULT_MODEL)]
-    assert "test-session-key" not in str(app.session_state["comparison"])
-    assert app.session_state["comparison"]["decision"]["provider"] == "jev-vercel"
+    assert element(app.selectbox, "Decision engine").value == "laya"
+    assert all("Jev" not in option for option in element(app.selectbox, "Decision engine").options)
+    assert all("Jev" not in option for option in element(app.selectbox, "Evaluate").options)
+    assert not any(item.label == "Jev connection" for item in app.expander)
+    assert element(app.selectbox, "LLM service").value == "Hugging Face"
+    assert element(app.text_input, "Hugging Face token").proto.type == TextInput.PASSWORD
+    assert not element(app.button, "Route ticket").disabled
+    assert not model_calls["laya"] and not model_calls["llm"]
+
+
+def test_hf_token_alone_does_not_enable_fallback(model_calls):
+    app = AppTest.from_file(str(Path(__file__).parents[1] / "app.py"), default_timeout=30).run()
+    element(app.text_input, "Hugging Face token").set_value("test-hf-token").run()
+    assert not element(app.checkbox, "Ask an LLM when uncertain").value
+    element(app.button, "Route ticket").click().run()
+    assert not app.exception
+    assert len(model_calls["laya"]) == 1
+    assert not model_calls["llm"]
+    assert app.session_state["last_result"]["status"] == "human_review"
+    assert any("fallback was disabled" in item.value for item in app.caption)
+
+
+def test_hf_fallback_calls_llm_only_when_laya_is_uncertain(model_calls):
+    from decision_router.providers import HF_BASE_URL, HF_DEFAULT_MODEL
+
+    app = AppTest.from_file(str(Path(__file__).parents[1] / "app.py"), default_timeout=30).run()
+    element(app.text_input, "Hugging Face token").set_value("test-hf-token").run()
+    element(app.checkbox, "Ask an LLM when uncertain").check().run()
+    element(app.button, "Route ticket").click().run()
+    assert not app.exception
+    assert app.session_state["last_result"]["status"] == "auto_routed_after_agreement"
+    assert model_calls["llm"] == [("test-hf-token", HF_BASE_URL, HF_DEFAULT_MODEL)]
+    assert "test-hf-token" not in str(app.session_state["last_result"])
+
+    model_calls["probability"] = 0.92
     element(app.button, "Route ticket").click().run()
     assert app.session_state["last_result"]["status"] == "auto_routed"
-    assert "test-session-key" not in str(app.session_state["last_result"])
+    assert len(model_calls["laya"]) == 2
+    assert len(model_calls["llm"]) == 1
+    assert any("passed the automatic routing threshold" in item.value for item in app.caption)
+
+    element(app.button, "Run live comparison").click().run()
+    assert not app.exception
+    assert len(model_calls["llm"]) == 2
+    assert app.session_state["comparison"]["decision"]["provider"] == "laya"
+    assert len(app.session_state["history"]) == 2
+    assert "test-hf-token" not in str(app.session_state["comparison"])
+
+
+def test_llm_request_failure_shows_actionable_error_instead_of_uncertainty(
+    monkeypatch, model_calls
+):
+    import httpx
+
+    from decision_router.providers import HostedLLM
+
+    def fail(self, text):
+        httpx.Response(
+            402,
+            json={"error": "private response test-hf-token"},
+            request=httpx.Request("POST", "https://router.huggingface.co/v1/chat/completions"),
+        ).raise_for_status()
+
+    monkeypatch.setattr(HostedLLM, "predict", fail)
+    app = AppTest.from_file(str(Path(__file__).parents[1] / "app.py"), default_timeout=30).run()
+    element(app.text_input, "Hugging Face token").set_value("test-hf-token").run()
+    element(app.checkbox, "Ask an LLM when uncertain").check().run()
+    element(app.button, "Route ticket").click().run()
+    assert not app.exception
+    assert any("Model request failed" in item.value for item in app.error)
+    assert not any(item.value == "Human review required" for item in app.warning)
+    result = app.session_state["last_result"]
+    assert result["status"] == "human_review"
+    assert "HTTP 402" in result["reason"]
+    assert "credits or billing" in result["reason"]
+    assert "test-hf-token" not in str(result)
+    assert "private response" not in str(result)

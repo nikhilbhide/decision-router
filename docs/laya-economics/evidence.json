@@ -1,0 +1,1576 @@
+{
+  "schema_version": 1,
+  "evaluated_at_utc": "2026-10-06T06:00:55.868229+00:00",
+  "hardware": {
+    "platform": "macOS-15.7.7-arm64-arm-64bit",
+    "machine": "arm64"
+  },
+  "packages": {
+    "torch": "2.14.1",
+    "laya": "0.3.4",
+    "transformers": "4.57.6",
+    "huggingface_hub": "0.36.2"
+  },
+  "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+  "dataset_sha256": "fc3325a3ef0ac19ed8d0ebc44907156e488a504b4e3f7b603608546a6541b159",
+  "method": {
+    "arrival_model": "Closed loop: each client waits for its response before next request",
+    "service": "FIFO single inference worker, one resident model per device",
+    "latency": "Response includes queue and adapter; service includes prepare/infer/validate",
+    "excluded": "Model loading, warmup, HTTP, database, hosted fallback, dynamic batching",
+    "threads": 4,
+    "quality_scope": "20 unique synthetic development tickets; repeats add no quality evidence",
+    "long_workload": "Neutral filler extends input to about 650 Laya tokens; speed only"
+  },
+  "policy_sweep": [
+    {
+      "threshold": 0.5,
+      "tickets": 20,
+      "failed_requests": 0,
+      "classification_accuracy": 0.8,
+      "auto_routed": 9,
+      "auto_routing_errors": 0,
+      "automation_coverage": 0.45,
+      "review_rate": 0.55,
+      "selective_accuracy": 1.0,
+      "p50_latency_ms": 40.02316649985005,
+      "p95_latency_ms": 52.01996425057596
+    },
+    {
+      "threshold": 0.6,
+      "tickets": 20,
+      "failed_requests": 0,
+      "classification_accuracy": 0.8,
+      "auto_routed": 7,
+      "auto_routing_errors": 0,
+      "automation_coverage": 0.35,
+      "review_rate": 0.65,
+      "selective_accuracy": 1.0,
+      "p50_latency_ms": 40.02316649985005,
+      "p95_latency_ms": 52.01996425057596
+    },
+    {
+      "threshold": 0.7,
+      "tickets": 20,
+      "failed_requests": 0,
+      "classification_accuracy": 0.8,
+      "auto_routed": 3,
+      "auto_routing_errors": 0,
+      "automation_coverage": 0.15,
+      "review_rate": 0.85,
+      "selective_accuracy": 1.0,
+      "p50_latency_ms": 40.02316649985005,
+      "p95_latency_ms": 52.01996425057596
+    },
+    {
+      "threshold": 0.8,
+      "tickets": 20,
+      "failed_requests": 0,
+      "classification_accuracy": 0.8,
+      "auto_routed": 0,
+      "auto_routing_errors": 0,
+      "automation_coverage": 0.0,
+      "review_rate": 1.0,
+      "selective_accuracy": null,
+      "p50_latency_ms": 40.02316649985005,
+      "p95_latency_ms": 52.01996425057596
+    },
+    {
+      "threshold": 0.85,
+      "tickets": 20,
+      "failed_requests": 0,
+      "classification_accuracy": 0.8,
+      "auto_routed": 0,
+      "auto_routing_errors": 0,
+      "automation_coverage": 0.0,
+      "review_rate": 1.0,
+      "selective_accuracy": null,
+      "p50_latency_ms": 40.02316649985005,
+      "p95_latency_ms": 52.01996425057596
+    },
+    {
+      "threshold": 0.9,
+      "tickets": 20,
+      "failed_requests": 0,
+      "classification_accuracy": 0.8,
+      "auto_routed": 0,
+      "auto_routing_errors": 0,
+      "automation_coverage": 0.0,
+      "review_rate": 1.0,
+      "selective_accuracy": null,
+      "p50_latency_ms": 40.02316649985005,
+      "p95_latency_ms": 52.01996425057596
+    }
+  ],
+  "memory": {
+    "mps": {
+      "process_peak_rss_bytes": 2990325760,
+      "note": "Process cumulative peak on macOS, not per-request or isolated per-device",
+      "mps_allocated_bytes": 1688619776
+    },
+    "cpu": {
+      "process_peak_rss_bytes": 3166601216,
+      "note": "Process cumulative peak on macOS, not per-request or isolated per-device"
+    }
+  },
+  "hardware_detail": "Apple M4 Pro, 24 GiB unified memory",
+  "total_load_requests": 3040,
+  "total_runtime_errors": 0,
+  "runs": [
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 1,
+      "repeat": 1,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 7.709712457999558,
+      "successful_rps": 25.941304697100737,
+      "response_p50_ms": 37.65875000044616,
+      "response_p95_ms": 42.78161220013317,
+      "response_p99_ms": 44.94179292030821,
+      "queue_p95_ms": 0.021810749649375787,
+      "service_p50_ms": 37.646958000095765,
+      "service_p95_ms": 42.764977399838244
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 4,
+      "repeat": 1,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 7.841400416999932,
+      "successful_rps": 25.50564814499279,
+      "response_p50_ms": 155.77024999993228,
+      "response_p95_ms": 167.91882260072268,
+      "response_p99_ms": 172.6670158398883,
+      "queue_p95_ms": 126.7378955003096,
+      "service_p50_ms": 38.40566650023902,
+      "service_p95_ms": 44.02887529927284
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 8,
+      "repeat": 1,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 7.648613791999196,
+      "successful_rps": 26.14852905884845,
+      "response_p50_ms": 304.3969170003038,
+      "response_p95_ms": 321.24503394920794,
+      "response_p99_ms": 324.9516417594532,
+      "queue_p95_ms": 281.96506459953525,
+      "service_p50_ms": 37.40364600025714,
+      "service_p95_ms": 42.897087800656664
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 16,
+      "repeat": 1,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 10.07695162499931,
+      "successful_rps": 19.847272016651534,
+      "response_p50_ms": 626.3472089999595,
+      "response_p95_ms": 1637.2428044996923,
+      "response_p99_ms": 1824.5155696701386,
+      "queue_p95_ms": 1498.9602256494882,
+      "service_p50_ms": 38.795562500126834,
+      "service_p95_ms": 109.11191489972195
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 16,
+      "repeat": 2,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 9.121337874999881,
+      "successful_rps": 21.926607997733296,
+      "response_p50_ms": 632.6146669998707,
+      "response_p95_ms": 1216.6599815495817,
+      "response_p99_ms": 1313.298176839371,
+      "queue_p95_ms": 1123.398981250647,
+      "service_p50_ms": 39.23268749986164,
+      "service_p95_ms": 89.97535240050634
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 8,
+      "repeat": 2,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 7.7959107500000755,
+      "successful_rps": 25.654475328619952,
+      "response_p50_ms": 309.37520850011424,
+      "response_p95_ms": 331.5147330001764,
+      "response_p99_ms": 344.5431254201594,
+      "queue_p95_ms": 292.5406836498951,
+      "service_p50_ms": 38.07902100015781,
+      "service_p95_ms": 43.30571490067996
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 4,
+      "repeat": 2,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 7.817977083999722,
+      "successful_rps": 25.58206526459641,
+      "response_p50_ms": 155.69385399976454,
+      "response_p95_ms": 164.04149969998798,
+      "response_p99_ms": 168.23700208952687,
+      "queue_p95_ms": 123.42479855005877,
+      "service_p50_ms": 38.269250000212196,
+      "service_p95_ms": 43.88550800013036
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 1,
+      "repeat": 2,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 7.914951292000296,
+      "successful_rps": 25.268633074487973,
+      "response_p50_ms": 38.62041650018,
+      "response_p95_ms": 44.93348990022241,
+      "response_p99_ms": 49.353854250166435,
+      "queue_p95_ms": 0.026335700249546776,
+      "service_p50_ms": 38.60206249964904,
+      "service_p95_ms": 44.91162324993638
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 1,
+      "repeat": 1,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 13.371308249999856,
+      "successful_rps": 5.98295981995635,
+      "response_p50_ms": 163.44006250028542,
+      "response_p95_ms": 177.59769999925084,
+      "response_p99_ms": 232.20825496047775,
+      "queue_p95_ms": 0.08195894934033257,
+      "service_p50_ms": 163.4024374998262,
+      "service_p95_ms": 177.57599649994518
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 4,
+      "repeat": 1,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 13.17949441700057,
+      "successful_rps": 6.070035577146718,
+      "response_p50_ms": 658.5347704999549,
+      "response_p95_ms": 676.6515288496521,
+      "response_p99_ms": 679.6176962504705,
+      "queue_p95_ms": 509.24527145002685,
+      "service_p50_ms": 164.561520999996,
+      "service_p95_ms": 170.76868750014
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 8,
+      "repeat": 1,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 13.322029416000078,
+      "successful_rps": 6.005091078985164,
+      "response_p50_ms": 1327.0560004998515,
+      "response_p95_ms": 1364.168521150259,
+      "response_p99_ms": 1406.2002213902906,
+      "queue_p95_ms": 1190.3035791999628,
+      "service_p50_ms": 165.34758299985697,
+      "service_p95_ms": 181.1876527502136
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 16,
+      "repeat": 1,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 15.038049165999837,
+      "successful_rps": 5.319838970926853,
+      "response_p50_ms": 2719.949083500069,
+      "response_p95_ms": 3730.4933875002916,
+      "response_p99_ms": 3814.2695005704627,
+      "queue_p95_ms": 3481.9387246499446,
+      "service_p50_ms": 175.6676250001874,
+      "service_p95_ms": 299.54107739986284
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 16,
+      "repeat": 2,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 12.827368207999825,
+      "successful_rps": 6.23666512902528,
+      "response_p50_ms": 2565.5151875002957,
+      "response_p95_ms": 2614.540195800555,
+      "response_p99_ms": 2625.307918859653,
+      "queue_p95_ms": 2454.5222541502426,
+      "service_p50_ms": 160.50374950009427,
+      "service_p95_ms": 167.1972764494967
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 8,
+      "repeat": 2,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 13.017263916000047,
+      "successful_rps": 6.145684724242916,
+      "response_p50_ms": 1304.7007290001602,
+      "response_p95_ms": 1364.0416583501974,
+      "response_p99_ms": 1370.0515651097976,
+      "queue_p95_ms": 1196.67267469963,
+      "service_p50_ms": 163.44256300044435,
+      "service_p95_ms": 172.63013094961934
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 4,
+      "repeat": 2,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 13.341929041000185,
+      "successful_rps": 5.996134423602268,
+      "response_p50_ms": 669.0240834996075,
+      "response_p95_ms": 680.5623851002565,
+      "response_p99_ms": 685.2488542897026,
+      "queue_p95_ms": 512.8947788499318,
+      "service_p50_ms": 167.22650000019712,
+      "service_p95_ms": 175.1611642498574
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 1,
+      "repeat": 2,
+      "input_tokens_min": 652,
+      "input_tokens_mean": 658.2,
+      "input_tokens_max": 662,
+      "requests": 80,
+      "successful": 80,
+      "errors": 0,
+      "elapsed_seconds": 13.130309832999956,
+      "successful_rps": 6.092773210799547,
+      "response_p50_ms": 164.59570849974625,
+      "response_p95_ms": 171.17730000054507,
+      "response_p99_ms": 172.2734643197873,
+      "queue_p95_ms": 0.021865199232706797,
+      "service_p50_ms": 164.58714600003077,
+      "service_p95_ms": 171.1674146000405
+    },
+    {
+      "device": "cpu",
+      "workload": "short",
+      "clients": 1,
+      "repeat": 1,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 29.16349212499972,
+      "successful_rps": 6.8578892796091,
+      "response_p50_ms": 113.54000000028464,
+      "response_p95_ms": 247.96228154978002,
+      "response_p99_ms": 650.1873196699468,
+      "queue_p95_ms": 0.029754800016235077,
+      "service_p50_ms": 113.53045850000854,
+      "service_p95_ms": 247.9473996492738
+    },
+    {
+      "device": "cpu",
+      "workload": "short",
+      "clients": 8,
+      "repeat": 1,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 21.98142900000039,
+      "successful_rps": 9.098589541198457,
+      "response_p50_ms": 865.9417085000314,
+      "response_p95_ms": 959.6522023996386,
+      "response_p99_ms": 973.6817991705175,
+      "queue_p95_ms": 845.0466628004506,
+      "service_p50_ms": 110.41881250002916,
+      "service_p95_ms": 126.69031934951818
+    },
+    {
+      "device": "cpu",
+      "workload": "short",
+      "clients": 8,
+      "repeat": 2,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 21.83444383299957,
+      "successful_rps": 9.159839450443398,
+      "response_p50_ms": 860.2533124994807,
+      "response_p95_ms": 930.0638354001876,
+      "response_p99_ms": 935.4625829199449,
+      "queue_p95_ms": 815.1054923004267,
+      "service_p50_ms": 110.73397900008786,
+      "service_p95_ms": 124.24937564946958
+    },
+    {
+      "device": "cpu",
+      "workload": "short",
+      "clients": 1,
+      "repeat": 2,
+      "input_tokens_min": 121,
+      "input_tokens_mean": 125.85,
+      "input_tokens_max": 132,
+      "requests": 200,
+      "successful": 200,
+      "errors": 0,
+      "elapsed_seconds": 22.737634124999204,
+      "successful_rps": 8.795989895013188,
+      "response_p50_ms": 111.11906199994337,
+      "response_p95_ms": 136.17169199992526,
+      "response_p99_ms": 163.03482990977497,
+      "queue_p95_ms": 0.022699349483445975,
+      "service_p50_ms": 111.10281250012122,
+      "service_p95_ms": 136.15038749935587
+    }
+  ],
+  "pooled_measurements": [
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 1,
+      "requests": 400,
+      "errors": 0,
+      "pooled_rps": 25.60055092385612,
+      "repeat_p95_ms": [
+        42.78161220013317,
+        44.93348990022241
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 4,
+      "requests": 400,
+      "errors": 0,
+      "pooled_rps": 25.54379955234268,
+      "repeat_p95_ms": [
+        167.91882260072268,
+        164.04149969998798
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 8,
+      "requests": 400,
+      "errors": 0,
+      "pooled_rps": 25.8991462580965,
+      "repeat_p95_ms": [
+        321.24503394920794,
+        331.5147330001764
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "short",
+      "clients": 16,
+      "requests": 400,
+      "errors": 0,
+      "pooled_rps": 20.835189509983003,
+      "repeat_p95_ms": [
+        1637.2428044996923,
+        1216.6599815495817
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 1,
+      "requests": 160,
+      "errors": 0,
+      "pooled_rps": 6.03736720900964,
+      "repeat_p95_ms": [
+        177.59769999925084,
+        171.17730000054507
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 4,
+      "requests": 160,
+      "errors": 0,
+      "pooled_rps": 6.032858690762791,
+      "repeat_p95_ms": [
+        676.6515288496521,
+        680.5623851002565
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 8,
+      "requests": 160,
+      "errors": 0,
+      "pooled_rps": 6.074574514328859,
+      "repeat_p95_ms": [
+        1364.168521150259,
+        1364.0416583501974
+      ]
+    },
+    {
+      "device": "mps",
+      "workload": "long",
+      "clients": 16,
+      "requests": 160,
+      "errors": 0,
+      "pooled_rps": 5.741884209108991,
+      "repeat_p95_ms": [
+        3730.4933875002916,
+        2614.540195800555
+      ]
+    },
+    {
+      "device": "cpu",
+      "workload": "short",
+      "clients": 1,
+      "requests": 400,
+      "errors": 0,
+      "pooled_rps": 7.70696185037041,
+      "repeat_p95_ms": [
+        247.96228154978002,
+        136.17169199992526
+      ]
+    },
+    {
+      "device": "cpu",
+      "workload": "short",
+      "clients": 8,
+      "requests": 400,
+      "errors": 0,
+      "pooled_rps": 9.129111761040617,
+      "repeat_p95_ms": [
+        959.6522023996386,
+        930.0638354001876
+      ]
+    }
+  ],
+  "quality_records": [
+    {
+      "id": "dev-01",
+      "group": "duplicate-charge",
+      "split": "dev",
+      "label": "billing",
+      "text": "We were charged twice for this month's subscription. Please refund the duplicate payment.",
+      "prediction": {
+        "label": "billing",
+        "provider": "laya",
+        "latency_ms": 177.27758299952256,
+        "probabilities": {
+          "billing": 0.724927507249275,
+          "technical": 0.06089391060893911,
+          "account": 0.05399460053994601,
+          "sales": 0.0807919208079192,
+          "other": 0.07939206079392061
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.4002,
+        "input_tokens": 128,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-02",
+      "group": "invoice-correction",
+      "split": "dev",
+      "label": "billing",
+      "text": "The invoice has the wrong company address. Please send a corrected invoice.",
+      "prediction": {
+        "label": "billing",
+        "provider": "laya",
+        "latency_ms": 40.634625000166125,
+        "probabilities": {
+          "billing": 0.54005400540054,
+          "technical": 0.11951195119511951,
+          "account": 0.0736073607360736,
+          "sales": 0.10871087108710871,
+          "other": 0.15811581158115812
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.185,
+        "input_tokens": 126,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-03",
+      "group": "refund-status",
+      "split": "dev",
+      "label": "billing",
+      "text": "I cancelled last week but my refund has not arrived. Can you check the payment?",
+      "prediction": {
+        "label": "billing",
+        "provider": "laya",
+        "latency_ms": 45.427458000631304,
+        "probabilities": {
+          "billing": 0.6115388461153884,
+          "technical": 0.103989601039896,
+          "account": 0.07239276072392761,
+          "sales": 0.0812918708129187,
+          "other": 0.1307869213078692
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.2567,
+        "input_tokens": 129,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-04",
+      "group": "annual-charge",
+      "split": "dev",
+      "label": "billing",
+      "text": "My subscription renewed annually when I selected monthly billing.",
+      "prediction": {
+        "label": "billing",
+        "provider": "laya",
+        "latency_ms": 40.513584000109404,
+        "probabilities": {
+          "billing": 0.43884388438843885,
+          "technical": 0.08100810081008102,
+          "account": 0.11331133113311331,
+          "sales": 0.16561656165616562,
+          "other": 0.2012201220122012
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.1101,
+        "input_tokens": 122,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-05",
+      "group": "integration-error",
+      "split": "dev",
+      "label": "technical",
+      "text": "Our integration returns a server error on every API call since the last release.",
+      "prediction": {
+        "label": "technical",
+        "provider": "laya",
+        "latency_ms": 38.633000000118045,
+        "probabilities": {
+          "billing": 0.042800000000000005,
+          "technical": 0.7735000000000001,
+          "account": 0.04950000000000001,
+          "sales": 0.04360000000000001,
+          "other": 0.09060000000000001
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.4802,
+        "input_tokens": 127,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-06",
+      "group": "mobile-crash",
+      "split": "dev",
+      "label": "technical",
+      "text": "The mobile app crashes as soon as I open the project screen.",
+      "prediction": {
+        "label": "technical",
+        "provider": "laya",
+        "latency_ms": 37.57670800041524,
+        "probabilities": {
+          "billing": 0.050794920507949204,
+          "technical": 0.7208279172082792,
+          "account": 0.0648935106489351,
+          "sales": 0.0532946705329467,
+          "other": 0.11018898110188982
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.401,
+        "input_tokens": 125,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-07",
+      "group": "slow-export",
+      "split": "dev",
+      "label": "technical",
+      "text": "Exporting a report takes ten minutes now. It used to complete in seconds.",
+      "prediction": {
+        "label": "other",
+        "provider": "laya",
+        "latency_ms": 40.136500000699016,
+        "probabilities": {
+          "billing": 0.1342,
+          "technical": 0.2793,
+          "account": 0.1512,
+          "sales": 0.1454,
+          "other": 0.2899
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0365,
+        "input_tokens": 128,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-08",
+      "group": "missing-save",
+      "split": "dev",
+      "label": "technical",
+      "text": "When I save a document, the changes disappear after refreshing the page.",
+      "prediction": {
+        "label": "other",
+        "provider": "laya",
+        "latency_ms": 36.861292000139656,
+        "probabilities": {
+          "billing": 0.1114,
+          "technical": 0.327,
+          "account": 0.1269,
+          "sales": 0.1049,
+          "other": 0.3298
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.084,
+        "input_tokens": 126,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-09",
+      "group": "password-reset",
+      "split": "dev",
+      "label": "account",
+      "text": "The password reset link expired. I need a new link so I can log in.",
+      "prediction": {
+        "label": "account",
+        "provider": "laya",
+        "latency_ms": 41.51604199978465,
+        "probabilities": {
+          "billing": 0.0696,
+          "technical": 0.1453,
+          "account": 0.6118,
+          "sales": 0.0557,
+          "other": 0.1176
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.2675,
+        "input_tokens": 129,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-10",
+      "group": "permissions",
+      "split": "dev",
+      "label": "account",
+      "text": "I joined the workspace but do not have permission to view any projects.",
+      "prediction": {
+        "label": "account",
+        "provider": "laya",
+        "latency_ms": 39.67745900081354,
+        "probabilities": {
+          "billing": 0.0842,
+          "technical": 0.2097,
+          "account": 0.3616,
+          "sales": 0.118,
+          "other": 0.2265
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0728,
+        "input_tokens": 126,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-11",
+      "group": "mfa-reset",
+      "split": "dev",
+      "label": "account",
+      "text": "I replaced my phone and lost my authentication codes. I cannot access my account.",
+      "prediction": {
+        "label": "account",
+        "provider": "laya",
+        "latency_ms": 40.36541700043017,
+        "probabilities": {
+          "billing": 0.0656,
+          "technical": 0.1533,
+          "account": 0.6038,
+          "sales": 0.0587,
+          "other": 0.1186
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.2606,
+        "input_tokens": 128,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-12",
+      "group": "locked-login",
+      "split": "dev",
+      "label": "account",
+      "text": "My login is locked after too many failed password attempts.",
+      "prediction": {
+        "label": "account",
+        "provider": "laya",
+        "latency_ms": 41.0526249997929,
+        "probabilities": {
+          "billing": 0.06130613061306131,
+          "technical": 0.16661666166616662,
+          "account": 0.6204620462046204,
+          "sales": 0.05390539053905392,
+          "other": 0.09770977097709771
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.2851,
+        "input_tokens": 123,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-13",
+      "group": "enterprise-demo",
+      "split": "dev",
+      "label": "sales",
+      "text": "Can we schedule a demo for our enterprise team before we purchase?",
+      "prediction": {
+        "label": "sales",
+        "provider": "laya",
+        "latency_ms": 37.95583400005853,
+        "probabilities": {
+          "billing": 0.0985,
+          "technical": 0.1424,
+          "account": 0.1239,
+          "sales": 0.3693,
+          "other": 0.2659
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0775,
+        "input_tokens": 125,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-14",
+      "group": "plan-compare",
+      "split": "dev",
+      "label": "sales",
+      "text": "Please compare the business and enterprise plans and share your pricing.",
+      "prediction": {
+        "label": "sales",
+        "provider": "laya",
+        "latency_ms": 40.00441599964688,
+        "probabilities": {
+          "billing": 0.1693,
+          "technical": 0.1239,
+          "account": 0.13,
+          "sales": 0.3158,
+          "other": 0.261
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0436,
+        "input_tokens": 124,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-15",
+      "group": "volume-quote",
+      "split": "dev",
+      "label": "sales",
+      "text": "We need a quote for 500 seats and would like to speak with sales.",
+      "prediction": {
+        "label": "sales",
+        "provider": "laya",
+        "latency_ms": 38.88829099923896,
+        "probabilities": {
+          "billing": 0.0716,
+          "technical": 0.0991,
+          "account": 0.0968,
+          "sales": 0.5163,
+          "other": 0.2162
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.1821,
+        "input_tokens": 127,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-16",
+      "group": "procurement",
+      "split": "dev",
+      "label": "sales",
+      "text": "Our procurement team needs information about your service before placing an order.",
+      "prediction": {
+        "label": "other",
+        "provider": "laya",
+        "latency_ms": 38.579542000661604,
+        "probabilities": {
+          "billing": 0.1235,
+          "technical": 0.1377,
+          "account": 0.1368,
+          "sales": 0.2388,
+          "other": 0.3632
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0598,
+        "input_tokens": 125,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-17",
+      "group": "vague-help",
+      "split": "dev",
+      "label": "other",
+      "text": "Something is wrong. Can someone help me?",
+      "prediction": {
+        "label": "other",
+        "provider": "laya",
+        "latency_ms": 40.04191700005322,
+        "probabilities": {
+          "billing": 0.1601,
+          "technical": 0.2795,
+          "account": 0.1355,
+          "sales": 0.1245,
+          "other": 0.3004
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0425,
+        "input_tokens": 121,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-18",
+      "group": "thanks",
+      "split": "dev",
+      "label": "other",
+      "text": "Thanks for your help yesterday. Have a lovely weekend.",
+      "prediction": {
+        "label": "other",
+        "provider": "laya",
+        "latency_ms": 37.509083000259125,
+        "probabilities": {
+          "billing": 0.1952,
+          "technical": 0.1978,
+          "account": 0.1879,
+          "sales": 0.1605,
+          "other": 0.2586
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0077,
+        "input_tokens": 123,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-19",
+      "group": "job-application",
+      "split": "dev",
+      "label": "other",
+      "text": "Where can I apply for a job at your company?",
+      "prediction": {
+        "label": "other",
+        "provider": "laya",
+        "latency_ms": 37.97154199946817,
+        "probabilities": {
+          "billing": 0.15928407159284072,
+          "technical": 0.18698130186981302,
+          "account": 0.18138186181381863,
+          "sales": 0.16628337166283372,
+          "other": 0.3060693930606939
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0205,
+        "input_tokens": 123,
+        "output_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "id": "dev-20",
+      "group": "equal-two-issues",
+      "split": "dev",
+      "label": "other",
+      "text": "I have a question about an invoice and a separate problem accessing my account. Both are equally urgent.",
+      "prediction": {
+        "label": "billing",
+        "provider": "laya",
+        "latency_ms": 44.19633299949055,
+        "probabilities": {
+          "billing": 0.43334333433343336,
+          "technical": 0.12291229122912291,
+          "account": 0.20372037203720372,
+          "sales": 0.10601060106010601,
+          "other": 0.134013401340134
+        },
+        "model": "typed-decisions / laya 0.3.4",
+        "revision": "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851",
+        "sdk_confidence": 0.0982,
+        "input_tokens": 132,
+        "output_tokens": 0
+      },
+      "error": null
+    }
+  ],
+  "pricing_verified_on": "2026-10-06",
+  "pricing": {
+    "sonnet": {
+      "model": "claude-sonnet-5-5",
+      "input_per_million": 2.0,
+      "cached_input_per_million": 0.2,
+      "output_per_million": 10.0,
+      "source": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview"
+    },
+    "luna": {
+      "model": "gpt-6-luna",
+      "input_per_million": 0.1,
+      "cached_input_per_million": 0.01,
+      "output_per_million": 0.5,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna"
+    }
+  },
+  "assumptions": {
+    "billable_input_tokens": 500,
+    "billable_output_tokens_including_reasoning": 50,
+    "cache_hit_fraction": 0,
+    "processing": "standard",
+    "illustrative_node_monthly_usd": 50,
+    "illustrative_node_rps": 25,
+    "utilization": 0.6,
+    "peak_factor": 1,
+    "month_days": 30,
+    "hosting_quote": false,
+    "cloud_throughput_verified": false,
+    "api_calls_made": 0,
+    "cloud_resources_provisioned": 0
+  },
+  "scenarios": [
+    {
+      "fallback_fraction": 1,
+      "volume": 1000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 1.5,
+        "cascade": 51.5,
+        "cascade_savings": -50.0
+      },
+      "luna": {
+        "llm_only": 0.075,
+        "cascade": 50.075,
+        "cascade_savings": -50.0
+      }
+    },
+    {
+      "fallback_fraction": 1,
+      "volume": 10000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 15.0,
+        "cascade": 65.0,
+        "cascade_savings": -50.0
+      },
+      "luna": {
+        "llm_only": 0.7499999999999999,
+        "cascade": 50.75,
+        "cascade_savings": -50.0
+      }
+    },
+    {
+      "fallback_fraction": 1,
+      "volume": 100000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 150.0,
+        "cascade": 200.0,
+        "cascade_savings": -50.0
+      },
+      "luna": {
+        "llm_only": 7.499999999999999,
+        "cascade": 57.5,
+        "cascade_savings": -50.0
+      }
+    },
+    {
+      "fallback_fraction": 1,
+      "volume": 1000000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 1500.0,
+        "cascade": 1550.0,
+        "cascade_savings": -50.0
+      },
+      "luna": {
+        "llm_only": 75.0,
+        "cascade": 125.0,
+        "cascade_savings": -50.0
+      }
+    },
+    {
+      "fallback_fraction": 1,
+      "volume": 10000000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 15000.0,
+        "cascade": 15050.0,
+        "cascade_savings": -50.0
+      },
+      "luna": {
+        "llm_only": 749.9999999999999,
+        "cascade": 799.9999999999999,
+        "cascade_savings": -50.0
+      }
+    },
+    {
+      "fallback_fraction": 1,
+      "volume": 100000000,
+      "nodes": 3,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 150,
+      "sonnet": {
+        "llm_only": 150000.0,
+        "cascade": 150150.0,
+        "cascade_savings": -150.0
+      },
+      "luna": {
+        "llm_only": 7499.999999999999,
+        "cascade": 7649.999999999999,
+        "cascade_savings": -150.0
+      }
+    },
+    {
+      "fallback_fraction": 0.55,
+      "volume": 1000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 1.5,
+        "cascade": 50.825,
+        "cascade_savings": -49.325
+      },
+      "luna": {
+        "llm_only": 0.075,
+        "cascade": 50.04125,
+        "cascade_savings": -49.966249999999995
+      }
+    },
+    {
+      "fallback_fraction": 0.55,
+      "volume": 10000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 15.0,
+        "cascade": 58.25,
+        "cascade_savings": -43.25
+      },
+      "luna": {
+        "llm_only": 0.7499999999999999,
+        "cascade": 50.4125,
+        "cascade_savings": -49.6625
+      }
+    },
+    {
+      "fallback_fraction": 0.55,
+      "volume": 100000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 150.0,
+        "cascade": 132.5,
+        "cascade_savings": 17.5
+      },
+      "luna": {
+        "llm_only": 7.499999999999999,
+        "cascade": 54.125,
+        "cascade_savings": -46.625
+      }
+    },
+    {
+      "fallback_fraction": 0.55,
+      "volume": 1000000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 1500.0,
+        "cascade": 875.0000000000001,
+        "cascade_savings": 624.9999999999999
+      },
+      "luna": {
+        "llm_only": 75.0,
+        "cascade": 91.25,
+        "cascade_savings": -16.25
+      }
+    },
+    {
+      "fallback_fraction": 0.55,
+      "volume": 10000000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 15000.0,
+        "cascade": 8300.0,
+        "cascade_savings": 6700.0
+      },
+      "luna": {
+        "llm_only": 749.9999999999999,
+        "cascade": 462.49999999999994,
+        "cascade_savings": 287.49999999999994
+      }
+    },
+    {
+      "fallback_fraction": 0.55,
+      "volume": 100000000,
+      "nodes": 3,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 150,
+      "sonnet": {
+        "llm_only": 150000.0,
+        "cascade": 82650.0,
+        "cascade_savings": 67350.0
+      },
+      "luna": {
+        "llm_only": 7499.999999999999,
+        "cascade": 4275.0,
+        "cascade_savings": 3224.999999999999
+      }
+    },
+    {
+      "fallback_fraction": 0.1,
+      "volume": 1000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 1.5,
+        "cascade": 50.15,
+        "cascade_savings": -48.65
+      },
+      "luna": {
+        "llm_only": 0.075,
+        "cascade": 50.0075,
+        "cascade_savings": -49.9325
+      }
+    },
+    {
+      "fallback_fraction": 0.1,
+      "volume": 10000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 15.0,
+        "cascade": 51.5,
+        "cascade_savings": -36.5
+      },
+      "luna": {
+        "llm_only": 0.7499999999999999,
+        "cascade": 50.075,
+        "cascade_savings": -49.325
+      }
+    },
+    {
+      "fallback_fraction": 0.1,
+      "volume": 100000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 150.0,
+        "cascade": 65.0,
+        "cascade_savings": 85.0
+      },
+      "luna": {
+        "llm_only": 7.499999999999999,
+        "cascade": 50.75,
+        "cascade_savings": -43.25
+      }
+    },
+    {
+      "fallback_fraction": 0.1,
+      "volume": 1000000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 1500.0,
+        "cascade": 200.0,
+        "cascade_savings": 1300.0
+      },
+      "luna": {
+        "llm_only": 75.0,
+        "cascade": 57.5,
+        "cascade_savings": 17.5
+      }
+    },
+    {
+      "fallback_fraction": 0.1,
+      "volume": 10000000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 15000.0,
+        "cascade": 1550.0,
+        "cascade_savings": 13450.0
+      },
+      "luna": {
+        "llm_only": 749.9999999999999,
+        "cascade": 124.99999999999999,
+        "cascade_savings": 624.9999999999999
+      }
+    },
+    {
+      "fallback_fraction": 0.1,
+      "volume": 100000000,
+      "nodes": 3,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 150,
+      "sonnet": {
+        "llm_only": 150000.0,
+        "cascade": 15150.0,
+        "cascade_savings": 134850.0
+      },
+      "luna": {
+        "llm_only": 7499.999999999999,
+        "cascade": 900.0,
+        "cascade_savings": 6599.999999999999
+      }
+    }
+  ],
+  "requests_per_second_projections": [
+    {
+      "sustained_rps": 0.1,
+      "volume": 259200.0,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 388.8,
+        "cascade": 50.0,
+        "cascade_savings": 338.8
+      },
+      "luna": {
+        "llm_only": 19.439999999999998,
+        "cascade": 50.0,
+        "cascade_savings": -30.560000000000002
+      }
+    },
+    {
+      "sustained_rps": 1,
+      "volume": 2592000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 3888.0,
+        "cascade": 50.0,
+        "cascade_savings": 3838.0
+      },
+      "luna": {
+        "llm_only": 194.39999999999998,
+        "cascade": 50.0,
+        "cascade_savings": 144.39999999999998
+      }
+    },
+    {
+      "sustained_rps": 10,
+      "volume": 25920000,
+      "nodes": 1,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 50,
+      "sonnet": {
+        "llm_only": 38880.0,
+        "cascade": 50.0,
+        "cascade_savings": 38830.0
+      },
+      "luna": {
+        "llm_only": 1943.9999999999998,
+        "cascade": 50.0,
+        "cascade_savings": 1893.9999999999998
+      }
+    },
+    {
+      "sustained_rps": 100,
+      "volume": 259200000,
+      "nodes": 7,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 350,
+      "sonnet": {
+        "llm_only": 388800.0,
+        "cascade": 350.0,
+        "cascade_savings": 388450.0
+      },
+      "luna": {
+        "llm_only": 19440.0,
+        "cascade": 350.0,
+        "cascade_savings": 19090.0
+      }
+    },
+    {
+      "sustained_rps": 1000,
+      "volume": 2592000000,
+      "nodes": 67,
+      "capacity_per_node": 38880000.0,
+      "laya_compute": 3350,
+      "sonnet": {
+        "llm_only": 3888000.0,
+        "cascade": 3350.0,
+        "cascade_savings": 3884650.0
+      },
+      "luna": {
+        "llm_only": 194399.99999999997,
+        "cascade": 3350.0,
+        "cascade_savings": 191049.99999999997
+      }
+    }
+  ],
+  "first_node_break_even_at_10_percent_fallback": {
+    "sonnet": 37037.03703703704,
+    "luna": 740740.7407407408
+  }
+}

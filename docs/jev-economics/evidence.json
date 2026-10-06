@@ -1,0 +1,120 @@
+{
+  "pricing_checked_on": "2026-10-06",
+  "method": "Price-only extrapolation, no paid API calls or hosted load test",
+  "prices_usd_per_million_tokens": {
+    "jev": {
+      "name": "TypeSafe Jev 1.13",
+      "input": 0.042,
+      "output": 0,
+      "source": "https://docs.typesafe.ai/models"
+    },
+    "luna": {
+      "name": "GPT-6 Luna",
+      "input": 0.1,
+      "output": 0.5,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna"
+    },
+    "sonnet": {
+      "name": "Claude Sonnet 5.5",
+      "input": 2,
+      "output": 10,
+      "source": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview"
+    }
+  },
+  "assumptions": {
+    "jev_billable_input_tokens": 500,
+    "llm_billable_input_tokens": 500,
+    "llm_total_billable_output_tokens_including_reasoning": 50,
+    "decisions_per_request": 1,
+    "hours_per_day": 24,
+    "days_per_month": 30,
+    "api_mode": "standard_uncached",
+    "fallback_fraction": 0,
+    "hosted_requests_made": 0
+  },
+  "jev_published_limits": {
+    "requests_per_second": 80,
+    "tokens_per_second": 100000,
+    "source": "https://docs.typesafe.ai/models",
+    "note": "Dynamically changing vendor limits; not measured capacity or latency"
+  },
+  "projections": [
+    {
+      "active_requests_per_second": 0.1,
+      "requests_per_30_day_month": 259200.0,
+      "monthly_usd": {
+        "jev": 5.4432,
+        "luna": 19.44,
+        "sonnet": 388.8
+      },
+      "jev_tokens_per_second": 50.0,
+      "within_published_jev_limits": true
+    },
+    {
+      "active_requests_per_second": 1,
+      "requests_per_30_day_month": 2592000,
+      "monthly_usd": {
+        "jev": 54.432,
+        "luna": 194.4,
+        "sonnet": 3888.0
+      },
+      "jev_tokens_per_second": 500,
+      "within_published_jev_limits": true
+    },
+    {
+      "active_requests_per_second": 10,
+      "requests_per_30_day_month": 25920000,
+      "monthly_usd": {
+        "jev": 544.32,
+        "luna": 1944.0,
+        "sonnet": 38880.0
+      },
+      "jev_tokens_per_second": 5000,
+      "within_published_jev_limits": true
+    },
+    {
+      "active_requests_per_second": 50,
+      "requests_per_30_day_month": 129600000,
+      "monthly_usd": {
+        "jev": 2721.6,
+        "luna": 9720.0,
+        "sonnet": 194400.0
+      },
+      "jev_tokens_per_second": 25000,
+      "within_published_jev_limits": true
+    },
+    {
+      "active_requests_per_second": 80,
+      "requests_per_30_day_month": 207360000,
+      "monthly_usd": {
+        "jev": 4354.56,
+        "luna": 15552.0,
+        "sonnet": 311040.0
+      },
+      "jev_tokens_per_second": 40000,
+      "within_published_jev_limits": true
+    },
+    {
+      "active_requests_per_second": 100,
+      "requests_per_30_day_month": 259200000,
+      "monthly_usd": {
+        "jev": 5443.2,
+        "luna": 19440.0,
+        "sonnet": 388800.0
+      },
+      "jev_tokens_per_second": 50000,
+      "within_published_jev_limits": false
+    },
+    {
+      "active_requests_per_second": 1000,
+      "requests_per_30_day_month": 2592000000,
+      "monthly_usd": {
+        "jev": 54432.0,
+        "luna": 194400.0,
+        "sonnet": 3888000.0
+      },
+      "jev_tokens_per_second": 500000,
+      "within_published_jev_limits": false
+    }
+  ]
+}

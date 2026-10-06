@@ -4,6 +4,8 @@ import math
 from dataclasses import asdict, dataclass
 from typing import Protocol
 
+from .errors import describe_failure
+
 LABELS = {
     "billing": "Invoices, duplicate charges, payments, subscriptions and refunds",
     "technical": "Product bugs, errors, integrations, performance and outages",
@@ -118,7 +120,7 @@ def route(text: str, primary: Predictor, policy: Policy, fallback: Predictor | N
     try:
         first = primary.predict(text)
     except Exception as exc:
-        return RouteResult("human_review", None, f"Primary model failed ({type(exc).__name__})")
+        return RouteResult("human_review", None, f"Primary model failed ({describe_failure(exc)})")
     decision = apply_policy(first, policy)
     if decision.status == "auto_routed" or fallback is None:
         return decision
@@ -126,6 +128,6 @@ def route(text: str, primary: Predictor, policy: Policy, fallback: Predictor | N
         second = fallback.predict(text)
     except Exception as exc:
         return RouteResult(
-            "human_review", None, f"Fallback model failed ({type(exc).__name__})", first
+            "human_review", None, f"Fallback model failed ({describe_failure(exc)})", first
         )
     return apply_policy(first, policy, second)

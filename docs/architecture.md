@@ -6,12 +6,10 @@
 flowchart TD
     User["User enters a ticket"] --> UI["Streamlit UI"]
     UI --> Provider{"Selected engine"}
-    Provider -->|"Hosted decisions"| Jev["Jev via Vercel AI Gateway"]
     Provider -->|"Live local inference"| Laya["Laya pinned checkpoint"]
     Provider -->|"Illustrative mode"| Sim["Labeled keyword simulation"]
     HF["Hugging Face weights cache"] -.->|"Initial download; cached thereafter"| Laya
     Laya --> Valid["Validate typed choice and probabilities"]
-    Jev --> Valid
     Sim --> Valid
     Valid --> Gate{"In scope and probability above threshold?"}
     Gate -->|"Yes"| Auto["Automatically select department"]
@@ -22,7 +20,6 @@ flowchart TD
     Agree -->|"Yes; in scope"| FallbackAuto["Route after model agreement"]
     Agree -->|"No"| Human
     Laya -.->|"Overflow or inference failure"| Human
-    Jev -.->|"Request failure"| Human
     Valid -.->|"Invalid output"| Human
     LLM -.->|"Failure or invalid output"| Human
     Auto --> Trace["Decision trace and JSON export"]
@@ -34,9 +31,9 @@ flowchart TD
 The model estimates a distribution; ordinary Python owns the action policy.
 `other` is always out of scope for automatic routing. The fallback agreement rule
 is an experimental policy, not a guarantee. The queue is a demonstration, not an
-external support integration. Jev and the optional hosted LLM receive the ticket
-when called. One Vercel Gateway key can serve both; Hugging Face is an alternative
-for the LLM. Live Laya runs locally after its initial checkpoint download.
+external support integration. The optional hosted LLM receives the ticket only when
+called. Hugging Face is the default LLM service; Vercel is an alternative. Live Laya
+runs locally after its initial checkpoint download. Jev is not selectable in the UI.
 
 ## Evaluation and live comparison
 
@@ -46,7 +43,6 @@ flowchart LR
     Dataset --> Test["Untouched test split"]
     Dev --> Predict["One provider per benchmark run"]
     Laya["Local Laya"] --> Predict
-    Jev["Hosted Jev"] --> Predict
     LLM["Structured LLM baseline"] --> Predict
     Predict --> Frozen["Frozen predictions; checkpoint SHA; dataset hash"]
     Frozen --> Sweep["Threshold sweep: coverage versus routing errors"]

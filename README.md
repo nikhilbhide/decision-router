@@ -2,14 +2,15 @@
 
 **When should a decision model act, and when should it ask for help?**
 
-A support-ticket routing experiment using hosted [Jev through Vercel](https://vercel.com/ai-gateway/models/jev)
-or local [Laya](https://github.com/NandhaKishorM/laya).
+A support-ticket routing experiment using local
+[Laya](https://github.com/NandhaKishorM/laya) as the default decision model
+in both the UI and CLI, with an optional Hugging Face hosted LLM.
 It selects a department, applies an explicit probability threshold, optionally asks
 an LLM for a second opinion, and queues unresolved cases for human review.
 
 The application and synthetic dataset are MIT licensed. Laya is an independent,
-Apache-2.0 open-weight model; it is not TypeSafe's Jev. Jev runs remotely through
-Vercel AI Gateway. Local Laya weights stay in the Hugging Face cache and are not committed.
+Apache-2.0 open-weight model. Its weights stay in the Hugging Face cache and are not committed.
+Jev is not offered in the UI; its existing adapter remains available through an explicit CLI option.
 
 ## Architecture
 
@@ -21,7 +22,7 @@ sequenceDiagram
     actor Owner as User
     participant UI as Interactive UI
     participant Control as Python control loop
-    participant SystemOne as Jev via Vercel or local Laya
+    participant SystemOne as Local Laya
     participant LLM as Vercel or Hugging Face hosted LLM
     participant Review as Human review queue
     Owner->>UI: Submit a support ticket
@@ -57,11 +58,9 @@ calendar execution and a general task-planning agent are not implemented.
 flowchart TD
     User["User enters a support ticket"] --> UI["Interactive Streamlit demo"]
     UI --> Engine{"Selected decision engine"}
-    Engine --> Jev["Hosted Jev via Vercel AI Gateway"]
     Engine --> Laya["Local Laya: pinned open-weight checkpoint"]
     Cache["Hugging Face weights cache"] -.->|"First download; local thereafter"| Laya
     Laya --> Validate["Validate choice and probability distribution"]
-    Jev --> Validate
     Validate --> Gate{"In scope and top probability above threshold?"}
     Gate -->|"Yes"| Auto["Automatically select department"]
     Gate -->|"No"| Fallback{"LLM fallback enabled?"}
@@ -71,7 +70,6 @@ flowchart TD
     Agree -->|"Yes; in scope"| Assisted["Route after agreement"]
     Agree -->|"No"| Human
     Laya -.->|"Overflow or failure"| Human
-    Jev -.->|"Request failure"| Human
     Validate -.->|"Invalid output"| Human
     LLM -.->|"Failure or invalid output"| Human
     Auto --> Trace["Decision trace and JSON export"]
@@ -80,7 +78,6 @@ flowchart TD
     Trace --> UI
     Dataset["Grouped dev and test tickets"] --> Eval["One-provider evaluation"]
     Laya --> Eval
-    Jev --> Eval
     LLM --> Eval
     Eval --> Metrics["Accuracy; warm latency; coverage; routing errors"]
     Metrics --> UI
@@ -94,7 +91,7 @@ See [the detailed diagrams](docs/architecture.md) for the evaluation workflow.
 ## Start the demo
 
 Use Python 3.10 or newer (the project was tested with 3.11). No API key is needed
-for simulation or local Laya inference.
+for Laya or simulation. The optional hosted LLM requires its service's token.
 
 ```bash
 cd /path/to/decision-router
@@ -103,11 +100,13 @@ python3.11 -m venv .venv
 .venv/bin/streamlit run app.py --server.address 127.0.0.1
 ```
 
-Open `http://localhost:8501`. The UI starts with **Jev · hosted via Vercel** and needs
-an AI Gateway key. Select **Mock rules · no AI model** to try the interface immediately,
-or **Laya · live local model** to run the local model. Simulation is deterministic keyword matching
-with invented probability scores, labeled throughout the application and exports.
-It must not be used as model evidence.
+Open `http://localhost:8501`. The UI starts with **Laya · live local model**.
+For an optional hosted LLM, enter your **Hugging Face token** under **Hosted LLM connection**
+and press Enter to apply it. Alternatively, export `HF_TOKEN` before starting Streamlit.
+`.env` files are not loaded automatically.
+Select **Mock rules · no AI model** to try the interface without downloading weights.
+Simulation uses deterministic keyword matching with invented probability scores;
+it must not be used as model evidence.
 
 Laya's first run downloads one checkpoint (roughly 1–2 GB) and builds the encoder.
 Later inference is local. CPU is the default; select `mps` for Apple Silicon or
@@ -118,7 +117,8 @@ evaluate those languages separately.
 ## Route a ticket
 
 ```bash
-.venv/bin/decision-router route --provider laya --device mps \
+# Laya is the default; inference is local after the first checkpoint download:
+.venv/bin/decision-router route \
   --text 'We were charged twice. Please refund the duplicate payment.'
 
 # Test the policy without downloading weights:
@@ -127,7 +127,7 @@ evaluate those languages separately.
 ```
 
 Five outcomes: `billing`, `technical`, `account`, `sales`, and `other`.
-The default checkpoint is explicitly `typed-decisions`. It was fine-tuned by Laya's
+The default Laya checkpoint is `typed-decisions`. It was fine-tuned by Laya's
 authors on four synthetic workflows, including customer service; it has not been
 fine-tuned on this project's dataset. Base checkpoints and this checkpoint can
 perform very differently. `--checkpoint english` and `--checkpoint multilingual`
@@ -147,53 +147,31 @@ before automating with it. `other` always requires review. The UI review queue i
 session-local; it does not send messages, create real support tickets or persist a database.
 Oversized inputs are rejected rather than silently truncated by the Laya SDK.
 
-## Hosted Jev through Vercel
+## Optional Jev adapter (CLI only)
 
-No decision-model download is required. For a hosted-only installation:
-
-```bash
-.venv/bin/python -m pip install -e '.[ui,dev]'
-```
-
-1. In the Vercel dashboard, choose **Create** beside **AI Gateway Key** and create a key.
-2. Open this application's sidebar and select **Jev · hosted via Vercel**.
-3. Enter the key in the masked **Vercel AI Gateway key** field under **Jev connection**.
-4. Leave **LLM service** set to **Vercel AI Gateway** to reuse the key for Qwen 3 32B.
-5. Submit a sample using **Route ticket**, or check **Include the configured LLM** and run **Live comparison**.
-
-The session key is not written to files, exports, logs or Git, and is not held in a
-shared resource cache. You may instead set `AI_GATEWAY_API_KEY` in the server environment.
-The application sends ticket text to Vercel only when you run Jev. You need available
-Gateway credits or billing. No project deployment or direct TypeSafe key is required.
-
-The adapter calls `POST https://ai-gateway.vercel.sh/v1/evaluate` with model
-`typesafe-ai/jev`, state and a typed department question. It validates the choice and
-the full five-option probability distribution before applying the routing policy.
-Hosted latency includes network time. **Run evaluation** makes 21 requests for a
-bundled split, including warmup; both Jev and any LLM fallback consume their respective
-provider credits. The comparison makes one Jev request and optionally one LLM request.
+The UI offers Laya and simulation as decision engines. The existing hosted Jev adapter
+is available only when explicitly selected in the CLI with `--provider jev`.
+It uses `AI_GATEWAY_API_KEY` and the Vercel evaluation API with model `typesafe-ai/jev`.
+Jev requires purchased Gateway credits; it is not eligible for free Gateway credits.
+No deployment or local decision-model download is required for this optional adapter.
 
 ```bash
 # Set AI_GATEWAY_API_KEY securely in your environment first.
 .venv/bin/decision-router route --provider jev \
   --text 'We were charged twice. Please refund the duplicate payment.'
-.venv/bin/decision-router benchmark --provider jev --split dev \
-  --output results/jev-dev.json
 ```
 
-Contract and UI tests use mocked responses and do not establish live account access
-or Jev's accuracy. An authenticated smoke run still requires your Gateway key.
-References: [Vercel evaluation API](https://vercel.com/docs/ai-gateway/modalities/evaluation),
-[Gateway API keys](https://vercel.com/docs/ai-gateway/authentication-and-byok/api-keys).
+References: [Jev model and eligibility](https://vercel.com/ai-gateway/models/jev),
+[Vercel evaluation API](https://vercel.com/docs/ai-gateway/modalities/evaluation).
 
 ## Hosted Vercel LLM baseline and fallback
 
-The UI defaults to `alibaba/qwen-3-32b` through Vercel AI Gateway, using the same
-masked Gateway key as Jev. No Hugging Face token, local LLM download or Vercel app
+Vercel AI Gateway is an alternative LLM service. Select it under **Hosted LLM connection**,
+then enter its **Vercel AI Gateway key**. Its default model is `alibaba/qwen-3-32b`. No Hugging Face token, local LLM download or Vercel app
 deployment is required. The LLM uses `/v1/chat/completions`; Jev uses the separate
 `/v1/evaluate` API. Both consume Gateway credits when you run them.
 
-Open **Hosted LLM connection**, leave **LLM service** on **Vercel AI Gateway**, and
+Open **Hosted LLM connection**, select **Vercel AI Gateway**, and
 check **Include the configured LLM** in **Live comparison**. Alternatively, enable
 **Ask an LLM when uncertain** for routing. A custom Vercel model ID is supported;
 choose a model/provider with JSON-schema structured-output support.
@@ -204,16 +182,16 @@ For CLI calls, configure the service explicitly (the CLI's default remains HF):
 # Set AI_GATEWAY_API_KEY securely in your environment first.
 export LLM_BASE_URL='https://ai-gateway.vercel.sh/v1'
 export LLM_MODEL='alibaba/qwen-3-32b'
-.venv/bin/decision-router route --provider jev --llm-fallback \
+.venv/bin/decision-router route --provider laya --llm-fallback \
   --text 'I cannot access my account and need help with an invoice.'
 ```
 
-Tests verify the API contract and that one session key serves both models. Live
+Tests verify the Vercel LLM API contract. Live
 authenticated requests and routing quality still need verification with your account.
 References: [Qwen 3 32B on Vercel](https://vercel.com/ai-gateway/models/qwen-3-32b),
 [Vercel's Python API guide](https://vercel.com/docs/ai-gateway/sdks-and-apis/python).
 
-## Alternative: hosted Hugging Face LLM baseline and fallback
+## Default: hosted Hugging Face LLM baseline and fallback
 
 No LLM download is required. The default for the Hugging Face connection is
 `Qwen/Qwen3.5-35B-A3B:deepinfra` via `https://router.huggingface.co/v1`.
@@ -226,7 +204,19 @@ by this project yet.
 In the UI, open **Hosted LLM connection**, select **Hugging Face**, choose the model, and enter a Hugging Face
 token with **Make calls to Inference Providers** permission. The token stays in the
 session and is not written to files, reports or Git. You need available inference
-credits. Then use **Live comparison**, enable LLM fallback, or evaluate the LLM.
+credits. Press Enter to apply the token; entering it makes no request by itself.
+
+- **Route a ticket:** enable **Ask an LLM when uncertain**. Laya runs first. The LLM is
+  called only when Laya cannot route automatically; matching non-`other` labels above
+  the agreement threshold can route. Low probabilities, disagreement, `other`, or
+  failures require review. A primary inference failure goes directly to review.
+- **Live comparison:** include the configured LLM to run both models independently on
+  the same text, regardless of thresholds. Compare labels and latency; no ticket is queued.
+- **Evaluate the model:** choose Laya or the LLM to benchmark that provider alone.
+  This does not measure the combined fallback workflow.
+
+The LLM returns a label, not calibrated probabilities. Token configuration enables
+its connection but does not turn on routing fallback.
 You can also provide `HF_TOKEN` in the server environment.
 
 Laya is different: its model card currently lists no Inference Provider deployment.
@@ -304,6 +294,54 @@ reports weak base-checkpoint performance on typed workflows and overconfident
 probabilities. Local execution and typed outputs do not establish decision quality.
 
 ## Reproducibility
+
+### Experimental OpenDecider Nano comparison
+
+The independent [OpenDecider Nano model](https://huggingface.co/manjunathshiva/opendecider-nano)
+can be tested with `scripts/compare_decision_models.py`. It remains an experiment;
+Laya is the application's default. OpenDecider needs Transformers 5, while the
+Laya integration uses Transformers 4, so run them in separate environments:
+
+```bash
+python3.11 -m venv .venv-opendecider
+.venv-opendecider/bin/python -m pip install \
+  'opendecider==0.8.1' 'transformers==5.18.0' \
+  'huggingface_hub==1.33.0' 'torch==2.14.1' 'httpx>=0.27,<1'
+
+PYTHONPATH=src HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
+  .venv-opendecider/bin/python scripts/compare_decision_models.py opendecider-nano \
+  --device mps --output results/opendecider-nano-dev.json
+
+PYTHONPATH=src HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
+  .venv/bin/python scripts/compare_decision_models.py laya \
+  --device mps --output results/laya-dev-comparison.json
+```
+
+Use `--device cpu` on machines without Apple Silicon. The runner pins Nano to
+revision `10c4b349f63d28186a46eacb6478cfce29c488e8` and uses the existing pinned
+Laya checkpoint. Both receive identical ticket text, department descriptions and
+instructions. Each run uses one warmup and 20 development predictions, in float32;
+run them sequentially to avoid competing for compute. Nano rejects truncated
+responses and both adapters validate probability distributions. No hosted LLM or
+inference credits are used. The held-out test split is not read by this experiment.
+
+On October 5, 2026, both models correctly classified 16/20 development tickets on
+Apple Silicon MPS. At the existing 0.85 threshold, Nano routed 11/20 with zero
+errors among those 11; Laya routed 0/20. Median warm latency was 35.0 ms for Nano
+and 37.5 ms for Laya (p95: 93.6 ms and 102.0 ms). This single small run does not
+establish a speed advantage. At 0.60, Nano routed 14/20 and Laya 7/20, again with
+zero errors among accepted tickets in this sample; this threshold exploration is
+not a recommendation to lower the routing threshold.
+
+Nano misclassified all four `other` examples, but each was below 0.85 and required
+review. Its greater automation coverage comes from different probability outputs,
+not greater overall accuracy on this dataset. Validate on representative tickets
+and retain an untouched test set before replacing the default or publishing
+production claims. Generated JSON reports include every prediction, dataset hash,
+package versions and latency scope. This run shared the existing PyTorch installation
+with the isolated Nano environment; the commands above install a separate copy.
+
+### Laya runtime
 
 - Laya SDK: `0.3.4` (the installable release used here).
 - Default Hugging Face revision: `55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`.

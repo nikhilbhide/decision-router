@@ -12,7 +12,12 @@ def main():
         description="Hosted and local decision routing with reproducible evaluation"
     )
     parser.add_argument("command", choices=["route", "benchmark"])
-    parser.add_argument("--provider", choices=["jev", "laya", "simulation", "llm"], default="laya")
+    parser.add_argument(
+        "--provider",
+        choices=["jev", "laya", "simulation", "llm"],
+        default="laya",
+        help="Decision provider (default: local Laya)",
+    )
     parser.add_argument(
         "--checkpoint",
         choices=["english", "typed-decisions", "multilingual"],

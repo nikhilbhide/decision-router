@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from decision_router.core import LABELS, Policy, Prediction, apply_policy, route
+from decision_router.errors import describe_failure
 from decision_router.evaluation import policy_metrics, run_benchmark
 from decision_router.providers import (
     HF_BASE_URL,
@@ -17,7 +18,6 @@ from decision_router.providers import (
     VERCEL_BASE_URL,
     VERCEL_DEFAULT_MODEL,
     HostedLLM,
-    Jev,
     make_provider,
 )
 
@@ -28,7 +28,6 @@ st.title("Decide. Escalate. Measure.")
 st.write("A support-ticket router that makes uncertainty part of the workflow.")
 
 ENGINE_NAMES = {
-    "jev": "Jev · hosted via Vercel",
     "laya": "Laya · live local model",
     "simulation": "Mock rules · no AI model",
     "llm": "LLM · configured endpoint",
@@ -38,7 +37,7 @@ ENGINE_NAMES = {
 with st.sidebar:
     st.header("Routing policy")
     provider_name = st.selectbox(
-        "Decision engine", ["jev", "laya", "simulation"], format_func=ENGINE_NAMES.get
+        "Decision engine", ["laya", "simulation"], format_func=ENGINE_NAMES.get
     )
     checkpoint = "typed-decisions"
     device = "mps" if platform.system() == "Darwin" and platform.machine() == "arm64" else "cpu"
@@ -47,26 +46,11 @@ with st.sidebar:
         device = st.selectbox(
             "Device", ["mps", "cpu", "cuda"] if device == "mps" else ["cpu", "cuda"]
         )
-    with st.expander("Jev connection", expanded=provider_name == "jev"):
-        gateway_input = st.text_input(
-            "Vercel AI Gateway key",
-            type="password",
-            key="gateway_key_input",
-            help="Create an AI Gateway key in Vercel. The key stays in this session and is not written to files or reports.",
-        )
-        gateway_key = gateway_input or os.environ.get("AI_GATEWAY_API_KEY", "")
-        jev_configured = bool(gateway_key.strip())
-        st.caption("typesafe-ai/jev · Hosted decisions; no weights to download")
-        st.caption(
-            "Key configured; ready to make a request"
-            if jev_configured
-            else "Add your Gateway key to enable Jev"
-        )
-        st.caption(
-            "Jev requests send the ticket to Vercel AI Gateway and use your Gateway credits."
-        )
     threshold = st.slider("Automatic routing: top probability", 0.40, 1.0, 0.85, 0.01)
-    use_fallback = st.checkbox("Ask an LLM when uncertain")
+    use_fallback = st.checkbox(
+        "Ask an LLM when uncertain",
+        help="On Route ticket, call the hosted LLM only if the decision engine cannot route automatically. Adding a token does not enable this option.",
+    )
     agreement_threshold = st.slider(
         "Minimum probability for LLM agreement", 0.0, threshold, min(0.60, threshold), 0.01
     )
@@ -75,7 +59,7 @@ with st.sidebar:
     )
     with st.expander("Hosted LLM connection", expanded=True):
         connection = st.selectbox(
-            "LLM service", ["Vercel AI Gateway", "Hugging Face", "Custom compatible API"]
+            "LLM service", ["Hugging Face", "Vercel AI Gateway", "Custom compatible API"]
         )
         if connection == "Vercel AI Gateway":
             model_choice = st.selectbox("Hosted model", [VERCEL_DEFAULT_MODEL, "Custom model ID"])
@@ -85,10 +69,13 @@ with st.sidebar:
                 else model_choice
             )
             llm_base = VERCEL_BASE_URL
-            llm_key = gateway_key
-            st.caption(
-                "Uses the same Gateway key entered above. No HF token or model download needed."
+            gateway_input = st.text_input(
+                "Vercel AI Gateway key",
+                type="password",
+                key="gateway_key_input",
+                help="The key stays in this session and is not written to files or reports.",
             )
+            llm_key = gateway_input or os.environ.get("AI_GATEWAY_API_KEY", "")
             st.caption(
                 "LLM requests send the ticket to Vercel AI Gateway and use your Gateway credits."
             )
@@ -106,7 +93,7 @@ with st.sidebar:
                 "Hugging Face token",
                 type="password",
                 key="hf_token_input",
-                help="Use a token with Inference Providers permission. It stays in this browser session; it is not written to disk.",
+                help="Use a token with Inference Providers permission, then press Enter to apply. It stays in this browser session; it is not written to disk.",
             )
             llm_key = token_input or os.environ.get("HF_TOKEN", "")
             st.caption(
@@ -124,6 +111,9 @@ with st.sidebar:
             "Ready to call the hosted model"
             if llm_configured
             else "Add the selected service's key to enable the LLM baseline and fallback"
+        )
+        st.caption(
+            "The LLM runs when fallback is enabled and needed, when included in Live comparison, or when selected for evaluation. Entering a token alone makes no request."
         )
     if provider_name == "simulation":
         st.warning("Simulation uses keyword rules and invented scores. It is not Laya inference.")
@@ -144,10 +134,7 @@ def configured_llm():
 
 
 def configured_primary(name):
-    return Jev(api_key=gateway_key) if name == "jev" else get_provider(name, checkpoint, device)
-
-
-primary_ready = provider_name != "jev" or jev_configured
+    return get_provider(name, checkpoint, device)
 
 
 route_tab, compare_tab, eval_tab, review_tab = st.tabs(
@@ -168,8 +155,11 @@ with route_tab:
             ],
         )
         text = st.text_area("Customer message", value=sample, height=180, max_chars=16000)
-        if not primary_ready:
-            st.info("Add your Vercel AI Gateway key under Jev connection in the sidebar.")
+        st.caption(
+            "Decision engine first → hosted LLM if uncertain → route on agreement or send to human review."
+            if use_fallback
+            else "Only the decision engine is used. Enable 'Ask an LLM when uncertain' in the sidebar to use a second opinion."
+        )
         if use_fallback and not llm_configured:
             st.info(
                 "Configure the selected service under Hosted LLM connection to enable fallback."
@@ -177,7 +167,7 @@ with route_tab:
         clicked = st.button(
             "Route ticket",
             type="primary",
-            disabled=not text.strip() or not primary_ready or (use_fallback and not llm_configured),
+            disabled=not text.strip() or (use_fallback and not llm_configured),
         )
         if clicked:
             try:
@@ -188,12 +178,13 @@ with route_tab:
                 st.session_state["last_result"] = {
                     "text": text,
                     "submitted_threshold": threshold,
+                    "fallback_enabled": use_fallback,
                     **result.to_dict(),
                 }
                 st.session_state.setdefault("history", []).append(st.session_state["last_result"])
             except Exception as exc:
                 st.error(
-                    f"Engine setup failed ({type(exc).__name__}). Check dependencies, device and optional LLM configuration in README.md."
+                    f"Engine setup failed ({describe_failure(exc)}). Check dependencies, device and optional LLM configuration in README.md."
                 )
                 st.session_state.pop("last_result", None)
     with right:
@@ -215,7 +206,9 @@ with route_tab:
             st.caption(
                 "Move the threshold to preview this decision without rerunning the model. The queue keeps the policy used when you submitted it."
             )
-            if result["status"] == "human_review":
+            if result["reason"].startswith(("Primary model failed", "Fallback model failed")):
+                st.error("Model request failed — ticket queued for review")
+            elif result["status"] == "human_review":
                 st.warning("Human review required")
             else:
                 st.success("Route to " + result["department"].title())
@@ -223,6 +216,7 @@ with route_tab:
             first = result["primary"]
             if first:
                 st.caption(f"{first['provider']} · {first['model']}")
+                st.write(f"Decision engine recommendation: **{first['label']}**")
                 cols = st.columns(2)
                 cols[0].metric("Inference latency", f"{first['latency_ms']:.1f} ms")
                 if first["probabilities"]:
@@ -230,10 +224,18 @@ with route_tab:
                     st.bar_chart(
                         pd.Series(first["probabilities"], name="Probability"), horizontal=True
                     )
-                if result["fallback"]:
-                    second = result["fallback"]
+                submitted_result = st.session_state["last_result"]
+                if submitted_result["fallback"]:
+                    second = submitted_result["fallback"]
                     st.write(
                         f"LLM recommendation: **{second['label']}** ({second['latency_ms']:.1f} ms)"
+                    )
+                elif not result["reason"].startswith("Fallback model failed"):
+                    st.caption(
+                        "LLM not called: the submitted prediction passed the automatic routing threshold."
+                        if submitted_result["status"] == "auto_routed"
+                        and submitted_result.get("fallback_enabled", False)
+                        else "LLM not called: fallback was disabled for this submission."
                     )
             with st.expander("Inspect the trace"):
                 st.json(result)
@@ -242,6 +244,9 @@ with compare_tab:
     st.subheader("Same ticket. Two ways to make the decision.")
     st.write(
         "Run the selected decision engine and your configured LLM on the same input. Compare the actual decisions and measured request time."
+    )
+    st.caption(
+        "Comparison runs each enabled model independently, regardless of the routing threshold. It does not add a ticket to the review queue."
     )
     compare_text = st.text_area(
         "Comparison ticket",
@@ -256,7 +261,7 @@ with compare_tab:
     if st.button(
         "Run live comparison",
         type="primary",
-        disabled=not compare_text.strip() or not primary_ready,
+        disabled=not compare_text.strip(),
     ):
         outputs = {
             "text": compare_text,
@@ -272,20 +277,22 @@ with compare_tab:
                     primary.predict(compare_text)  # local warmup, excluded from measurement
                 outputs["decision"] = asdict(primary.predict(compare_text))
             except Exception as exc:
-                outputs["errors"]["decision"] = type(exc).__name__
+                outputs["errors"]["decision"] = describe_failure(exc)
         if compare_llm:
             with st.spinner("Calling the configured LLM…"):
                 try:
                     outputs["llm"] = asdict(configured_llm().predict(compare_text))
                 except Exception as exc:
-                    outputs["errors"]["llm"] = type(exc).__name__
+                    outputs["errors"]["llm"] = describe_failure(exc)
         st.session_state["comparison"] = outputs
     comparison = st.session_state.get("comparison")
     if comparison:
         st.caption(comparison["text"])
         cols = st.columns(2, gap="large")
         for column, key, title in zip(
-            cols, ["decision", "llm"], [ENGINE_NAMES[comparison["engine"]], "Structured LLM"]
+            cols,
+            ["decision", "llm"],
+            [ENGINE_NAMES.get(comparison["engine"], comparison["engine"]), "Structured LLM"],
         ):
             with column:
                 st.markdown("### " + title)
@@ -333,7 +340,7 @@ with compare_tab:
                 + " on the selected department."
             )
         st.caption(
-            "Hosted measurements include network time. Laya excludes loading and uses a warmup; Jev makes one request. This sample does not establish broad speed or quality."
+            "Hosted measurements include network time. Laya excludes loading and uses a warmup. This sample does not establish broad speed or quality."
         )
         if comparison["engine"] == "simulation":
             st.warning(
@@ -353,21 +360,17 @@ with eval_tab:
     )
     c1, c2 = st.columns(2)
     eval_engine = c1.selectbox(
-        "Evaluate", ["jev", "laya", "simulation", "llm"], format_func=ENGINE_NAMES.get
+        "Evaluate", ["laya", "simulation", "llm"], format_func=ENGINE_NAMES.get
     )
     split = c2.selectbox("Dataset split", ["dev", "test"])
     st.write(
         "Explore thresholds on development tickets. Freeze the policy before evaluating test tickets."
     )
-    eval_ready = (
-        jev_configured if eval_engine == "jev" else llm_configured if eval_engine == "llm" else True
-    )
-    if eval_engine == "jev":
+    eval_ready = llm_configured if eval_engine == "llm" else True
+    if eval_engine == "llm":
         st.caption(
-            "Runs 21 paid Jev requests: one warmup and 20 synthetic tickets. Uses your Vercel Gateway credits."
+            "Runs 21 hosted LLM requests: one warmup and 20 synthetic tickets. Uses the selected service's inference credits."
         )
-        if not jev_configured:
-            st.info("Add your Vercel AI Gateway key under Jev connection in the sidebar.")
     if st.button("Run evaluation", type="primary", disabled=not eval_ready):
         try:
             with st.spinner("Running warmup and evaluating each ticket…"):
@@ -380,7 +383,7 @@ with eval_tab:
             st.session_state["report"] = report
         except Exception as exc:
             st.error(
-                f"Evaluation failed ({type(exc).__name__}). Check the setup instructions in README.md."
+                f"Evaluation failed ({describe_failure(exc)}). Check the setup instructions in README.md."
             )
     report = st.session_state.get("report")
     if report:
