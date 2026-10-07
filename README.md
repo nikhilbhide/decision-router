@@ -12,23 +12,23 @@ The application and synthetic dataset are MIT licensed. Laya is an independent,
 Apache-2.0 open-weight model. Its weights stay in the Hugging Face cache and are not committed.
 Jev is not offered in the UI; its existing adapter remains available through an explicit CLI option.
 
-## Architecture
-
-### Request sequence
+## Request sequence
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Owner as User
-    participant UI as Interactive UI
-    participant Control as Python control loop
-    participant SystemOne as Local Laya
-    participant LLM as Vercel or Hugging Face hosted LLM
+    actor Reviewer as Human reviewer
+    participant UI as Ticket Routing App
+    participant Control as Agent orchestrator
+    participant SystemOne as System One Model
+    participant LLM as System Two Model (LLM)
     participant Review as Human review queue
     Owner->>UI: Submit a support ticket
-    UI->>Control: Ticket and routing thresholds
+    UI->>Control: Request ticket routing
     Control->>SystemOne: State and typed department question
     SystemOne-->>Control: Choice and probability for each department
+    Control->>Control: Apply configured routing policy
     alt In scope and above automatic threshold
         Control-->>UI: Automatically route to chosen department
     else Below threshold or out of scope
@@ -41,52 +41,51 @@ sequenceDiagram
         else Unresolved, out of scope or model failure
             Control->>Review: Add ticket and decision trace
             Review-->>UI: Await a human decision
-            Owner->>UI: Choose the department after review
-            UI->>Review: Record human decision for this session
         end
     end
-    UI-->>Owner: Decision, probabilities, measured latency and trace
+    UI-->>Owner: Routing result, probabilities, measured latency and trace
+    opt Case is waiting for human review
+        Reviewer->>UI: Open Review queue
+        UI->>Review: Load pending cases
+        Review-->>UI: Ticket, review reason and decision trace
+        UI-->>Reviewer: Display case for review
+        Reviewer->>UI: Choose department and record human decision
+        UI->>Review: Save choice and mark case reviewed for this session
+        Review-->>UI: Human decision recorded
+        UI-->>Reviewer: Show case under Reviewed cases
+    end
 ```
+
+The ticket-routing app collects the ticket and policy settings. The agent orchestrator
+applies the configured thresholds to decide whether to route, request an LLM second
+opinion, or queue the ticket for human review.
 
 This follows the sequence-diagram style of an agent control loop. In this version,
 the bounded decision is department selection; external tools, ontology storage,
 calendar execution and a general task-planning agent are not implemented.
 
-### Components
-
-```mermaid
-flowchart TD
-    User["User enters a support ticket"] --> UI["Interactive Streamlit demo"]
-    UI --> Engine{"Selected decision engine"}
-    Engine --> Laya["Local Laya: pinned open-weight checkpoint"]
-    Cache["Hugging Face weights cache"] -.->|"First download; local thereafter"| Laya
-    Laya --> Validate["Validate choice and probability distribution"]
-    Validate --> Gate{"In scope and top probability above threshold?"}
-    Gate -->|"Yes"| Auto["Automatically select department"]
-    Gate -->|"No"| Fallback{"LLM fallback enabled?"}
-    Fallback -->|"Yes"| LLM["Vercel or Hugging Face LLM: structured second opinion"]
-    Fallback -->|"No"| Human["Human review queue"]
-    LLM --> Agree{"Same department and above agreement threshold?"}
-    Agree -->|"Yes; in scope"| Assisted["Route after agreement"]
-    Agree -->|"No"| Human
-    Laya -.->|"Overflow or failure"| Human
-    Validate -.->|"Invalid output"| Human
-    LLM -.->|"Failure or invalid output"| Human
-    Auto --> Trace["Decision trace and JSON export"]
-    Assisted --> Trace
-    Human --> Trace
-    Trace --> UI
-    Dataset["Grouped dev and test tickets"] --> Eval["One-provider evaluation"]
-    Laya --> Eval
-    LLM --> Eval
-    Eval --> Metrics["Accuracy; warm latency; coverage; routing errors"]
-    Metrics --> UI
-```
-
 The model produces a distribution; Python code owns the routing policy. The optional
 simulation substitutes labeled keyword rules for the decision model. The review queue is a local
 demo. Individual-provider benchmarks do not measure the combined cascade.
 See [the detailed diagrams](docs/architecture.md) for the evaluation workflow.
+
+## Human review journey
+
+1. Submit a ticket in **Route a ticket**. Uncertain predictions, out-of-scope
+   requests, model disagreement and inference failures can require human review.
+2. The app returns the routing result immediately. Open **Review queue** to find
+   pending cases; the initial request does not wait for a reviewer.
+3. Expand a case to read the ticket, the reason for review, the primary model's
+   recommendation when available, and the full decision trace.
+4. Choose a department under **Reviewer decision** and click **Record human decision**.
+5. The case leaves the pending queue and appears under **Reviewed cases** with the
+   chosen department. Pending cases can also be exported as JSON.
+
+User and reviewer are roles; the same person can perform both in this demo.
+The queue and recorded decisions live in the current Streamlit session. Recording
+a decision does not dispatch the ticket to a support team or update an external
+ticketing system. A shared, durable review queue would require persistent storage
+and reviewer access controls.
 
 ## Start the demo
 
